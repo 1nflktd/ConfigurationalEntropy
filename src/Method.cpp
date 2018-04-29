@@ -2,6 +2,15 @@
 
 void Method::run(int m, int n) {
 	Vector<Graph> graphs = this->generateGraphs(m, n);
+	for (int i = 0; i < m; ++i) {
+		for (int j = 0; j < m; ++j) {
+			if (i != j) {
+				if (this->checkIsomorphism(graphs[i], graphs[j])) {
+					// add graphs[i] count ++;
+				}
+			}
+		}
+	}
 }
 
 Vector<Graph> Method::generateGraphs(int m, int n) {
