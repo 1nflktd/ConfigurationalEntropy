@@ -76,10 +76,17 @@ Vector<Matrix<int>> generateGraphs(int m, int n, const Matrix<int> & graphao) {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, graphao[0].size() - 1); // [0, size]
 
+    Vector<int> verticesGerados(m);
+
 	int nGraph = 0;
 	while (nGraph < m) {
 		// posicao aleatoria (vertice aleatorio (?))
 		int vertex = dis(gen);
+		if (std::find(verticesGerados.begin(), verticesGerados.end(), vertex) != verticesGerados.end()) {
+			continue;
+		}
+
+		verticesGerados.push_back(vertex);
 		// achou vertice
 		Matrix<int> graph{ Matrix<int>(n + 1, Vector<int>(n + 1, 0)) };
 		Vector<int> vecPosicoes; //{ n + 1 }; // ex: 0 -> 101, 1 -> 97, etc.
@@ -121,8 +128,8 @@ int main() {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0}
 	};
 
-	int m = 3;
-	int n = 5;
+	int m = 12;
+	int n = 10;
 	Vector<Matrix<int>> graphs = generateGraphs(m, n, m1);
 
 	return 0;
