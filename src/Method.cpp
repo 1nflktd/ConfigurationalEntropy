@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <random>
+#include <iostream>
+
 #include "Method.hpp"
 
 void Method::run(int m, int n) {
@@ -16,38 +20,93 @@ void Method::run(int m, int n) {
 Vector<Graph> Method::generateGraphs(int m, int n) {
 	Vector<Graph> graphs = Vector<Graph>(m); // m graphs
 
-	// buscar m posicoes aleatorias
-		// buscar n vizinhos
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dis(0, this->graph.getVertices() - 1); // [0, size]
+
+	Vector<int> generatedVertices(m);
 
 	int nGraph = 0;
 	while (nGraph < m) {
-		// posicao aleatoria (vertice aleatorio (?))
-		int pos1 = 0;
-		// achou vertice
+		// random position
+		int vertex = dis(gen);
+
+		// to not repeat
+		if (std::find(generatedVertices.begin(), generatedVertices.end(), vertex) != generatedVertices.end()) {
+			continue;
+		}
+
+		generatedVertices.push_back(vertex);
+
 		Graph graph;
-		graph.initialize(n + 1); // nao vai ter esse nro necessariamente
-		// buscar n vizinhos
-		this->searchNeighboors(pos1, graph);
+		graph.initialize(n + 1);
+
+		Vector<int> vertexPositions; // ex: 0 -> 101, 1 -> 97, etc.
+		vertexPositions.push_back(vertex);
+
+		std::map<int, bool> visitedVertices;
+
+		int neighboorsFound = 0;
+
+		this->searchNeighboors(vertex, n, m, graph, vertexPositions, neighboorsFound, visitedVertices);
+
 		graphs[nGraph] = graph;
+
+		std::cout << "vertex: " << (vertex + 1) << "\n";
+		graph.print();
+
 		++nGraph;
 	}
 
 	return graphs;
 }
 
-void Method::checkIsomorphism(const Graph & graph1, const Graph & graph2) {
-	;
+bool Method::checkIsomorphism(const Graph & graph1, const Graph & graph2) {
+	return false;
 }
 
-void Method::searchNeighboors(int vertex, Graph & graph) {
-	// essa funcao tem que ser recursiva, ate n+1
+void Method::searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighboorsFound, std::map<int, bool> & visitedVertices) {
+	if (neighboorsFound >= n) {
+		return;
+	}
 
-	int nVertices = graph.getVertices();
-	// 1 level
-	int neighboors = 0;
-	for (int i = 0; i < nVertices && neighboors < nVertices; ++i) {
-		if (this->graph(vertex, i) == 1) {
-			graph.addEdge(vertex, i); // ERRADO, tem que comecar do 0 (vertex pode ser qualquer valor)
+	if (visitedVertices[vertex]) {
+		return;
+	}
+
+	auto itVertex = std::find(vertexPositions.begin(), vertexPositions.end(), vertex);
+	if (itVertex == vertexPositions.end()) {
+		return;
+	}
+
+	int posVertex = std::distance(vertexPositions.begin(), itVertex);
+	visitedVertices[vertex] = true;
+
+	for (int v = 0; v < this->graph.getVertices() && neighboorsFound < n; ++v) {
+		if (this->graph(vertex, v) == 1) {
+			auto itI = std::find(vertexPositions.begin(), vertexPositions.end(), v);
+			if  (itI == vertexPositions.end()) {
+				++neighboorsFound;
+
+				vertexPositions.push_back(v);
+
+				auto posInserted = vertexPositions.size() - 1;
+
+				graph.addEdge(posVertex, posInserted);
+			} else {
+				int posI = std::distance(vertexPositions.begin(), itI);
+
+				graph.addEdge(posVertex, posI);
+			}
+		}
+	}
+
+	if (neighboorsFound < n) {
+		// found not visited neighboor
+		for (const auto & v : vertexPositions) {
+			if (!visitedVertices[v]) {
+				searchNeighboors(v, n, m, graph, vertexPositions, neighboorsFound, visitedVertices);
+			}
 		}
 	}
 }

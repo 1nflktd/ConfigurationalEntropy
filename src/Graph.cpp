@@ -1,3 +1,4 @@
+#include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <sstream>
@@ -11,7 +12,7 @@ Graph::Graph(const std::string & path) {
 void Graph::initialize(int vertices) {
 	this->vertices = vertices;
 	this->edges = 0;
-	this->matrix = Matrix<int>(vertices, Vector<int>(vertices, -1)); // initialize all as -1 (no connection)
+	this->matrix = Matrix<int>(vertices, Vector<int>(vertices, 0)); // initialize all as -1 (no connection)
 }
 
 void Graph::addEdge(int vertex, int adjacentVertex) {
@@ -32,7 +33,7 @@ void Graph::loadFile(const std::string & path) {
 	std::ifstream infile{path, std::ios::binary};
 
 	if (!infile) {
-		throw std::runtime_error("Nao foi possível abrir o arquivo\n");
+		throw std::runtime_error("Can not open file.\n");
 	}
 
 	int vertices;
@@ -64,4 +65,13 @@ void Graph::loadFile(const std::string & path) {
 
 void Graph::generateRandom() {
 	;
+}
+
+void Graph::print() {
+	for (const auto & r : this->matrix) {
+		for (const auto & c : r) {
+			std::cout << c << " ";
+		}
+		std::cout << "\n";
+	}
 }

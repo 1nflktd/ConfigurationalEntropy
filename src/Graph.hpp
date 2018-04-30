@@ -23,6 +23,7 @@ public:
 	void addEdge(int vertex, int adjacentVertex);
 	void initialize(int vertices);
 	inline int getVertices() const { return this->vertices; };
+	void print();
 };
 
 #endif
