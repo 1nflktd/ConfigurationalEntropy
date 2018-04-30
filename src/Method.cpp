@@ -9,8 +9,13 @@ void Method::run(int m, int n) {
 	for (int i = 0; i < m; ++i) {
 		for (int j = 0; j < m; ++j) {
 			if (i != j) {
-				if (this->checkIsomorphism(graphs[i], graphs[j])) {
+				if (this->isIsomorph(graphs[i], graphs[j])) {
 					// add graphs[i] count ++;
+					std::cout << "graphs are isomorphs\n";
+					std::cout << "graph(i)\n";
+					graphs[i].print();
+					std::cout << "graph(j)\n";
+					graphs[j].print();
 				}
 			}
 		}
@@ -18,7 +23,7 @@ void Method::run(int m, int n) {
 }
 
 Vector<Graph> Method::generateGraphs(int m, int n) {
-	Vector<Graph> graphs = Vector<Graph>(m); // m graphs
+	Vector<Graph> graphs(m); // m graphs
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -61,8 +66,29 @@ Vector<Graph> Method::generateGraphs(int m, int n) {
 	return graphs;
 }
 
-bool Method::checkIsomorphism(const Graph & graph1, const Graph & graph2) {
+bool Method::isIsomorph(const Graph & graph1, const Graph & graph2) {
+	if (graph1.getVertices() != graph2.getVertices() || graph1.getEdges() != graph2.getEdges()) {
+		return false;
+	}
+
+	Vector<int> map(graph1.getVertices());
+	std::iota(map.begin(), map.end(), 0); // 0, 1, 2, 3, up to N
+	do
+	{
+		if (this->checkIsomorphism(graph1, graph2, map)) {
+			return true;
+		}
+	} while (std::next_permutation(map.begin(), map.end()));
+
 	return false;
+}
+
+bool Method::checkIsomorphism(const Graph & graph1, const Graph & graph2, const Vector<int> & map) {
+	int N = graph1.getVertices();
+	for (int i = 0; i < N; ++i)
+		for (int j = 0; j < N; ++j)
+			if (graph1(i, j) != graph2(map[i], map[j])) return false;
+	return true;
 }
 
 void Method::searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighboorsFound, std::map<int, bool> & visitedVertices) {
