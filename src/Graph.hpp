@@ -14,6 +14,8 @@ class Graph {
 	Matrix<int> matrix;
 	int vertices;
 	int edges;
+	int label;
+	int primalVertex;
 	void loadFile(const std::string & path);
 public:
 	Graph() {}
@@ -22,6 +24,10 @@ public:
 	void generateRandom();
 	void addEdge(int vertex, int adjacentVertex);
 	void initialize(int vertices);
+	inline void setPrimalVertex(int _primalVertex) {this->primalVertex = _primalVertex; }
+	inline int getPrimalVertex() const { return this->primalVertex; }
+	inline void setLabel(int _label) { this->label = _label; }
+	inline int getLabel() const { return this->label; }
 	inline int getVertices() const { return this->vertices; };
 	inline int getEdges() const { return this->edges; };
 	void print();

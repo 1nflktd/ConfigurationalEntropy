@@ -6,20 +6,38 @@
 
 void Method::run(int m, int n) {
 	Vector<Graph> graphs = this->generateGraphs(m, n);
+
+	int label = 1;
 	for (int i = 0; i < m; ++i) {
-		for (int j = 0; j < m; ++j) {
+		for (int j = i; j < m; ++j) {
 			if (i != j) {
 				if (this->isIsomorph(graphs[i], graphs[j])) {
 					// add graphs[i] count ++;
-					std::cout << "graphs are isomorphs\n";
-					std::cout << "graph(i)\n";
-					graphs[i].print();
-					std::cout << "graph(j)\n";
-					graphs[j].print();
+					int labelGi = graphs[i].getLabel();
+					int labelGj = graphs[j].getLabel();
+					if (labelGi == 0 && labelGj == 0) {
+						graphs[i].setLabel(label);
+						graphs[j].setLabel(label);
+						++label; // label already used
+					} else if (labelGi > 0 && labelGj == 0) {
+						graphs[j].setLabel(labelGi);
+					} else if (labelGj > 0 && labelGi == 0) {
+						graphs[i].setLabel(labelGj);
+					} else if (labelGi != labelGj) {
+						// throw error ?
+						std::cout << "errr something went wrong: labelGi " << labelGi << " labelGj " << labelGj << "\n";
+						std::cout << "g(i)->primalVertex: " << graphs[i].getPrimalVertex() << "\ng(j)->primalVertex: " << graphs[j].getPrimalVertex() << "\n";
+						std::cout << "graph(i)\n";
+						graphs[i].print();
+						std::cout << "graph(j)\n";
+						graphs[j].print();
+					}
 				}
 			}
 		}
 	}
+
+	std::cout << "Different graph topologies " << (label - 1) << "\n";
 }
 
 Vector<Graph> Method::generateGraphs(int m, int n) {
@@ -45,6 +63,7 @@ Vector<Graph> Method::generateGraphs(int m, int n) {
 
 		Graph graph;
 		graph.initialize(n + 1);
+		graph.setPrimalVertex(vertex);
 
 		Vector<int> vertexPositions; // ex: 0 -> 101, 1 -> 97, etc.
 		vertexPositions.push_back(vertex);
@@ -57,7 +76,7 @@ Vector<Graph> Method::generateGraphs(int m, int n) {
 
 		graphs[nGraph] = graph;
 
-		std::cout << "vertex: " << (vertex + 1) << "\n";
+		std::cout << "vertex: " << vertex << "\n";
 		graph.print();
 
 		++nGraph;
