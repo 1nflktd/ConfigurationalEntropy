@@ -69,18 +69,15 @@ def searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, vis
 
 
 def run(G, m, n):
-	# nx.draw(G, with_labels=True)
-	# plt.show()
-
 	graphs = generateSubgraphs(G, m, n)
-
 	for g in graphs:
 		nx.draw(g, with_labels=True)
 		plt.show()
 
 def main():
-	G = nx.read_adjlist("files/graph1.x")
+	G = nx.read_adjlist("files/graph1.x", nodetype=int)
 	G = nx.convert_node_labels_to_integers(G, 0)
+
 	n = 3
 	m = 4
 	run(G, m, n)
