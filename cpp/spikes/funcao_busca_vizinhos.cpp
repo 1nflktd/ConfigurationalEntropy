@@ -19,7 +19,7 @@ void printMatrix(const Matrix<int> & g) {
 	}
 }
 
-void searchNeighboors(int vertex, int n, int m, const Matrix<int> & graphao, Matrix<int> & graph, Vector<int> & vecPosicoes, int & vizinhosAchados, std::map<int, bool> & verticesVisitados) {
+void searchNeighbors(int vertex, int n, int m, const Matrix<int> & graphao, Matrix<int> & graph, Vector<int> & vecPosicoes, int & vizinhosAchados, std::map<int, bool> & verticesVisitados) {
 	if (vizinhosAchados >= n) {
 		return;
 	}
@@ -63,7 +63,7 @@ void searchNeighboors(int vertex, int n, int m, const Matrix<int> & graphao, Mat
 		// achar vizinho nao visitado
 		for (const auto & v : vecPosicoes) {
 			if (!verticesVisitados[v]) {
-				searchNeighboors(v, n, m, graphao, graph, vecPosicoes, vizinhosAchados, verticesVisitados);
+				searchNeighbors(v, n, m, graphao, graph, vecPosicoes, vizinhosAchados, verticesVisitados);
 			}
 		}
 	}
@@ -97,7 +97,7 @@ Vector<Matrix<int>> generateGraphs(int m, int n, const Matrix<int> & graphao) {
 		std::cout << "vertex " << vertex << "\n";
 
 		int vizinhosAchados = 0;
-		searchNeighboors(vertex, n, m, graphao, graph, vecPosicoes, vizinhosAchados, verticesVisitados);
+		searchNeighbors(vertex, n, m, graphao, graph, vecPosicoes, vizinhosAchados, verticesVisitados);
 		graphs[nGraph] = graph;
 
 		std::cout << "grafo\n";

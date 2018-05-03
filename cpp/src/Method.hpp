@@ -10,7 +10,7 @@ class Method {
 public:
 	Method(const Graph & _graph) : graph(_graph) {}
 	void run(int m, int n);
-	void searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighboorsFound, std::map<int, bool> & visitedVertices);
+	void searchNeighbors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighborsFound, std::map<int, bool> & visitedVertices);
 	Vector<Graph> generateGraphs(int m, int n);
 	bool isIsomorph(const Graph & graph1, const Graph & graph2);
 	bool checkIsomorphism(const Graph & graph1, const Graph & graph2, const Vector<int> & map);

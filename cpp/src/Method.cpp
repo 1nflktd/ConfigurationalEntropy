@@ -70,9 +70,9 @@ Vector<Graph> Method::generateGraphs(int m, int n) {
 
 		std::map<int, bool> visitedVertices;
 
-		int neighboorsFound = 0;
+		int neighborsFound = 0;
 
-		this->searchNeighboors(vertex, n, m, graph, vertexPositions, neighboorsFound, visitedVertices);
+		this->searchNeighbors(vertex, n, m, graph, vertexPositions, neighborsFound, visitedVertices);
 
 		graphs[nGraph] = graph;
 
@@ -110,8 +110,8 @@ bool Method::checkIsomorphism(const Graph & graph1, const Graph & graph2, const 
 	return true;
 }
 
-void Method::searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighboorsFound, std::map<int, bool> & visitedVertices) {
-	if (neighboorsFound >= n) {
+void Method::searchNeighbors(int vertex, int n, int m, Graph & graph, Vector<int> & vertexPositions, int & neighborsFound, std::map<int, bool> & visitedVertices) {
+	if (neighborsFound >= n) {
 		return;
 	}
 
@@ -127,11 +127,11 @@ void Method::searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<in
 	int posVertex = std::distance(vertexPositions.begin(), itVertex);
 	visitedVertices[vertex] = true;
 
-	for (int v = 0; v < this->graph.getVertices() && neighboorsFound < n; ++v) {
+	for (int v = 0; v < this->graph.getVertices() && neighborsFound < n; ++v) {
 		if (this->graph(vertex, v) == 1) {
 			auto itI = std::find(vertexPositions.begin(), vertexPositions.end(), v);
 			if  (itI == vertexPositions.end()) {
-				++neighboorsFound;
+				++neighborsFound;
 
 				vertexPositions.push_back(v);
 
@@ -146,11 +146,11 @@ void Method::searchNeighboors(int vertex, int n, int m, Graph & graph, Vector<in
 		}
 	}
 
-	if (neighboorsFound < n) {
+	if (neighborsFound < n) {
 		// found not visited neighboor
 		for (const auto & v : vertexPositions) {
 			if (!visitedVertices[v]) {
-				searchNeighboors(v, n, m, graph, vertexPositions, neighboorsFound, visitedVertices);
+				searchNeighbors(v, n, m, graph, vertexPositions, neighborsFound, visitedVertices);
 			}
 		}
 	}
