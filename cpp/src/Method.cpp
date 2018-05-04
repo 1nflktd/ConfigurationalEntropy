@@ -9,29 +9,27 @@ void Method::run(int m, int n) {
 
 	int label = 1;
 	for (int i = 0; i < m; ++i) {
-		for (int j = i; j < m; ++j) {
-			if (i != j) {
-				if (this->isIsomorph(graphs[i], graphs[j])) {
-					// add graphs[i] count ++;
-					int labelGi = graphs[i].getLabel();
-					int labelGj = graphs[j].getLabel();
-					if (labelGi == 0 && labelGj == 0) {
-						graphs[i].setLabel(label);
-						graphs[j].setLabel(label);
-						++label; // label already used
-					} else if (labelGi > 0 && labelGj == 0) {
-						graphs[j].setLabel(labelGi);
-					} else if (labelGj > 0 && labelGi == 0) {
-						graphs[i].setLabel(labelGj);
-					} else if (labelGi != labelGj) {
-						// throw error ?
-						std::cout << "errr something went wrong: labelGi " << labelGi << " labelGj " << labelGj << "\n";
-						std::cout << "g(i)->primalVertex: " << graphs[i].getPrimalVertex() << "\ng(j)->primalVertex: " << graphs[j].getPrimalVertex() << "\n";
-						std::cout << "graph(i)\n";
-						graphs[i].print();
-						std::cout << "graph(j)\n";
-						graphs[j].print();
-					}
+		for (int j = i + 1; j < m; ++j) {
+			if (this->isIsomorph(graphs[i], graphs[j])) {
+				// add graphs[i] count ++;
+				int labelGi = graphs[i].getLabel();
+				int labelGj = graphs[j].getLabel();
+				if (labelGi == 0 && labelGj == 0) {
+					graphs[i].setLabel(label);
+					graphs[j].setLabel(label);
+					++label; // label already used
+				} else if (labelGi > 0 && labelGj == 0) {
+					graphs[j].setLabel(labelGi);
+				} else if (labelGj > 0 && labelGi == 0) {
+					graphs[i].setLabel(labelGj);
+				} else if (labelGi != labelGj) {
+					// throw error ?
+					std::cout << "errr something went wrong: labelGi " << labelGi << " labelGj " << labelGj << "\n";
+					std::cout << "g(i)->primalVertex: " << graphs[i].getPrimalVertex() << "\ng(j)->primalVertex: " << graphs[j].getPrimalVertex() << "\n";
+					std::cout << "graph(i)\n";
+					graphs[i].print();
+					std::cout << "graph(j)\n";
+					graphs[j].print();
 				}
 			}
 		}

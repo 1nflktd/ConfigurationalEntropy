@@ -1,6 +1,7 @@
 import sys
 import networkx as nx
 import matplotlib.pyplot as plt
+import random as rd
 
 def generateSubgraphs(G, m, n):
 	graphs = []
@@ -8,14 +9,15 @@ def generateSubgraphs(G, m, n):
 
 	i = 0
 	while i < m:
-		vertex = i # random number
+		vertex = rd.randint(0, len(G.nodes) - 1) # random number
 
 		if vertex in generatedVertices:
 			continue
 
 		generatedVertices.append(vertex)
 
-		graph = nx.Graph()
+		graph = nx.Graph(isoLabel=0)
+
 		vertexPositions = [vertex]
 		visitedVertices = {}
 		neighborsFound = [0] # workaround to pass by reference
@@ -53,11 +55,12 @@ def searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, vis
 				vertexPositions.append(v)
 
 				posInserted = len(vertexPositions) - 1
-
-				graph.add_edge(posVertex, posInserted)
 			else:
-				pos = vertexPositions.index(v)
-				graph.add_edge(posVertex, pos)
+				posInserted = vertexPositions.index(v)
+
+			graph.add_edge(posVertex, posInserted)
+			graph.node[posInserted]["originalLabel"] = v
+			graph.node[posVertex]["originalLabel"] = vertex
 
 		v += 1
 
@@ -68,18 +71,61 @@ def searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, vis
 				searchNeighbors(G, v, m, n, graph, vertexPositions, neighborsFound, visitedVertices)
 
 
+def printGraph(graph):
+	originalLabels = {}
+	for node in graph.nodes:
+		originalLabels[node] = graph.node[node]["originalLabel"]
+
+	nx.draw(graph, with_labels=True, labels=originalLabels)
+	plt.show()
+
 def run(G, m, n):
 	graphs = generateSubgraphs(G, m, n)
-	for g in graphs:
-		nx.draw(g, with_labels=True)
-		plt.show()
+
+	isoLabel = 1
+	for i in range(len(graphs)):
+		for j in range(i + 1, len(graphs)):
+			if nx.is_isomorphic(graphs[i], graphs[j]):
+				isoLabelGi = graphs[i].graph["isoLabel"]
+				isoLabelGj = graphs[j].graph["isoLabel"]
+
+				if isoLabelGi == 0 and isoLabelGj == 0:
+					graphs[i].graph["isoLabel"] = isoLabel
+					graphs[j].graph["isoLabel"] = isoLabel
+
+					"""
+					print("gi")
+					printGraph(graphs[i])
+					print("gj")
+					printGraph(graphs[j])
+					print("---------------")
+					"""
+
+					isoLabel += 1 # label already used
+				elif isoLabelGi > 0 and isoLabelGj == 0:
+					graphs[j].graph["isoLabel"] = isoLabelGi
+				elif isoLabelGj > 0 and isoLabelGi == 0:
+					graphs[i].graph["isoLabel"] = isoLabelGj
+				elif isoLabelGi != isoLabelGj:
+					# throw error
+					print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (isoLabelGi, isoLabelGj))
+					print("gi", graphs[i].edges)
+					print("gj", graphs[j].edges)
+			else:
+				"""
+				print("non isomorphic")
+				print("gi", graphs[i].edges)
+				print("gj", graphs[j].edges)
+				"""
+
+	print("Different graph topologies %d" % (isoLabel - 1))
 
 def main():
 	G = nx.read_adjlist("files/graph1.x", nodetype=int)
 	G = nx.convert_node_labels_to_integers(G, 0)
 
-	n = 3
-	m = 4
+	n = 10
+	m = 10
 	run(G, m, n)
 
 if __name__ == "__main__":
