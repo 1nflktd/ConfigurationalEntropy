@@ -2,6 +2,7 @@ import sys
 import networkx as nx
 import matplotlib.pyplot as plt
 import random as rd
+import math
 
 def generateSubgraphs(G, m, n):
 	graphs = []
@@ -22,7 +23,7 @@ def generateSubgraphs(G, m, n):
 		visitedVertices = {}
 		neighborsFound = [0] # workaround to pass by reference
 
-		searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, visitedVertices)
+		searchNeighbors(G, vertex, m, n - 1, graph, vertexPositions, neighborsFound, visitedVertices)
 
 		graphs.append(graph)
 		i += 1
@@ -82,6 +83,7 @@ def printGraph(graph):
 def run(G, m, n):
 	graphs = generateSubgraphs(G, m, n)
 
+	graphsLabelQty = {}
 	isoLabel = 1
 	for i in range(len(graphs)):
 		for j in range(i + 1, len(graphs)):
@@ -92,39 +94,33 @@ def run(G, m, n):
 				if isoLabelGi == 0 and isoLabelGj == 0:
 					graphs[i].graph["isoLabel"] = isoLabel
 					graphs[j].graph["isoLabel"] = isoLabel
-
-					"""
-					print("gi")
-					printGraph(graphs[i])
-					print("gj")
-					printGraph(graphs[j])
-					print("---------------")
-					"""
-
+					graphsLabelQty[isoLabel] = 2
 					isoLabel += 1 # label already used
 				elif isoLabelGi > 0 and isoLabelGj == 0:
 					graphs[j].graph["isoLabel"] = isoLabelGi
+					graphsLabelQty[isoLabelGi] += 1
 				elif isoLabelGj > 0 and isoLabelGi == 0:
 					graphs[i].graph["isoLabel"] = isoLabelGj
+					graphsLabelQty[isoLabelGj] += 1
 				elif isoLabelGi != isoLabelGj:
-					# throw error
+					# throw error ?
 					print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (isoLabelGi, isoLabelGj))
 					print("gi", graphs[i].edges)
 					print("gj", graphs[j].edges)
-			else:
-				"""
-				print("non isomorphic")
-				print("gi", graphs[i].edges)
-				print("gj", graphs[j].edges)
-				"""
+
+	shannonEntropy = 0
+	for i in range(1, isoLabel):
+		pi = float(graphsLabelQty[i]) / m
+		shannonEntropy -= pi * math.log(pi)
 
 	print("Different graph topologies %d" % (isoLabel - 1))
+	print("Shannon entropy %f" % shannonEntropy)
 
 def main():
 	G = nx.read_adjlist("files/graph1.x", nodetype=int)
 	G = nx.convert_node_labels_to_integers(G, 0)
 
-	n = 10
+	n = 12
 	m = 10
 	run(G, m, n)
 
