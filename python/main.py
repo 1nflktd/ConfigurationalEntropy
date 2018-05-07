@@ -66,7 +66,7 @@ def searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, vis
 		v += 1
 
 	if neighborsFound[0] < n:
-		# found not visited neighboor
+		# found not visited neighbor
 		for v in vertexPositions:
 			if v not in visitedVertices or not visitedVertices[v]:
 				searchNeighbors(G, v, m, n, graph, vertexPositions, neighborsFound, visitedVertices)
