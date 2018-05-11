@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import networkx as nx
+import random
+import math
+import operator
 
 from ase import Atoms
 from ase.visualize import view
@@ -30,6 +33,57 @@ for atom1, distance in enumerate(slab.get_all_distances()):
 
 	#print("")
 
+(dmax, dmin) = (
+	{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }, # x, y, z
+	{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") }  # x, y, z
+)
+
+for distance in slab.get_positions():
+	for idx, d in enumerate(distance):
+		if (d > dmax[idx]):
+			dmax[idx] = d
+		if (d < dmin[idx]):
+			dmin[idx] = d
+
+x_rand = random.uniform(dmin[0], dmax[0])
+y_rand = random.uniform(dmin[1], dmax[1])
+z_rand = random.uniform(dmin[2], dmax[2])
+
+distances = {}
+for idx, distance in enumerate(slab.get_positions()):
+	distances[idx] = math.sqrt((x_rand - distance[0]) ** 2 + (y_rand - distance[1]) ** 2 + (z_rand - distance[2]) ** 2)
+
+print("Point: %f %f %f\n" % (x_rand, y_rand, z_rand))
+
+print("Distances")
+print(distances)
+print("")
+print("dmax, dmin")
+print(dmax, dmin)
+
+orderedDistances = sorted(distances.items(), key=operator.itemgetter(1))
+
+subGraph = nx.Graph()
+
+n = 4 # 4 neighbors
+print("Distances ordered")
+i = 0
+nClosestNeighbors = []
+for node, distance in orderedDistances:
+	if i >= n:
+		break
+
+	print("%d : %f" % (node, distance))
+	i += 1
+	nClosestNeighbors.append(node)
+
+for node in nClosestNeighbors:
+	for neighbor in graph[node]:
+		if neighbor in nClosestNeighbors:
+			subGraph.add_edge(node, neighbor)
+
 view(slab)
-nx.draw(graph, with_labels=True)
+# nx.draw(graph, with_labels=True)
+# plt.show()
+nx.draw(subGraph, with_labels=True)
 plt.show()
