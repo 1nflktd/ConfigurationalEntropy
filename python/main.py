@@ -135,13 +135,15 @@ def printGraph(graph):
 
 def main():
 	if len(sys.argv) < 5:
-		print("1 parameter: xyz filename.\n2 parameter: m.\n3 parameter: n\n4 parameter: covalent_radii_cut_off")
+		print("1 parameter: xyz filename\n2 parameter: m\n3 parameter: n\n4 parameter: covalent_radii_cut_off")
 		return
 
 	filename = sys.argv[1]
-	m = sys.argv[2] # 100
-	n = sys.argv[3] # 8
-	covalent_radii_cut_off = sys.argv[4] # 1.12
+	m = int(sys.argv[2]) # 100
+	n = int(sys.argv[3]) # 8
+	covalent_radii_cut_off = float(sys.argv[4]) # 1.12
+
+	print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\n" % (filename, m, n, covalent_radii_cut_off))
 
 	print("Starting script...")
 
