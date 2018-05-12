@@ -12,38 +12,38 @@ import operator
 def run(G, m, n, slab):
 	graphs = generateSubgraphs(G, m, n, slab)
 
-	graphsLabelQty = {}
-	isoLabel = 1
+	label_total = {}
+	iso_label = 1
 	for i in range(len(graphs)):
 		for j in range(i + 1, len(graphs)):
 			if nx.is_isomorphic(graphs[i], graphs[j]):
-				isoLabelGi = graphs[i].graph["isoLabel"]
-				isoLabelGj = graphs[j].graph["isoLabel"]
+				iso_label_i = graphs[i].graph["isoLabel"]
+				iso_label_j = graphs[j].graph["isoLabel"]
 
-				if isoLabelGi == 0 and isoLabelGj == 0:
-					graphs[i].graph["isoLabel"] = isoLabel
-					graphs[j].graph["isoLabel"] = isoLabel
-					graphsLabelQty[isoLabel] = 2
-					isoLabel += 1 # label already used
-				elif isoLabelGi > 0 and isoLabelGj == 0:
-					graphs[j].graph["isoLabel"] = isoLabelGi
-					graphsLabelQty[isoLabelGi] += 1
-				elif isoLabelGj > 0 and isoLabelGi == 0:
-					graphs[i].graph["isoLabel"] = isoLabelGj
-					graphsLabelQty[isoLabelGj] += 1
-				elif isoLabelGi != isoLabelGj:
+				if iso_label_i == 0 and iso_label_j == 0:
+					graphs[i].graph["isoLabel"] = iso_label
+					graphs[j].graph["isoLabel"] = iso_label
+					label_total[iso_label] = 2
+					iso_label += 1 # label already used
+				elif iso_label_i > 0 and iso_label_j == 0:
+					graphs[j].graph["isoLabel"] = iso_label_i
+					label_total[iso_label_i] += 1
+				elif iso_label_j > 0 and iso_label_i == 0:
+					graphs[i].graph["isoLabel"] = iso_label_j
+					label_total[iso_label_j] += 1
+				elif iso_label_i != iso_label_j:
 					# throw error ?
-					print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (isoLabelGi, isoLabelGj))
+					print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
 					print("gi", graphs[i].edges)
 					print("gj", graphs[j].edges)
 
-	shannonEntropy = 0
-	for i in range(1, isoLabel):
-		pi = float(graphsLabelQty[i]) / m
-		shannonEntropy -= pi * math.log(pi)
+	shannon_entropy = 0
+	for i in range(1, iso_label):
+		pi = float(label_total[i]) / m
+		shannon_entropy -= pi * math.log(pi)
 
-	print("Different graph topologies %d" % (isoLabel - 1))
-	print("Shannon entropy %f" % shannonEntropy)
+	print("Different graph topologies %d" % (iso_label - 1))
+	print("Shannon entropy %f" % shannon_entropy)
 
 def generateSubgraphs(G, m, n, slab):
 	graphs = []
@@ -53,11 +53,11 @@ def generateSubgraphs(G, m, n, slab):
 	i = 0
 	while i < m:
 		(x, y, z) = generateRandomPoint(dmax, dmin)
-		orderedDistances = getOrderedDistancesFromPoint(slab, x, y, z)
+		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
 
 		# print(x, y, z)
 
-		graph = generateSubGraph(G, n, orderedDistances)
+		graph = generateSubGraph(G, n, n_closest_neighbors)
 
 		# printGraph(graph)
 
@@ -72,7 +72,8 @@ def getMaxMinSlab(slab):
 		{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") }  # x, y, z
 	)
 
-	for distance in slab.get_positions():
+	positions = slab.get_positions()
+	for distance in positions:
 		for idx, d in enumerate(distance):
 			if (d > dmax[idx]):
 				dmax[idx] = d
@@ -88,43 +89,40 @@ def generateRandomPoint(dmin, dmax):
 
 	return (x, y, z)
 
-def getOrderedDistancesFromPoint(slab, x, y, z):
+def getNClosestNeighborsFromPoint(slab, n, x, y, z):
 	distances = {}
-	for idx, distance in enumerate(slab.get_positions()):
+	positions = slab.get_positions()
+	for idx, distance in enumerate(positions):
 		distances[idx] = math.sqrt((x - distance[0]) ** 2 + (y - distance[1]) ** 2 + (z - distance[2]) ** 2)
 
-	return sorted(distances.items(), key=operator.itemgetter(1))
+	n_first = sorted(distances.items(), key=operator.itemgetter(1))[:n] # return list of tuples
+	return [i[0] for i in n_first] # return only the first element in list
 
-def generateSubGraph(graph, n, orderedDistances):
-	subGraph = nx.Graph(isoLabel=0)
+def generateSubGraph(G, n, n_closest_neighbors):
+	graph = nx.Graph(isoLabel=0)
 
-	i = 0
-	nClosestNeighbors = []
-	for node, distance in orderedDistances:
-		if i >= n:
-			break
-		i += 1
-		nClosestNeighbors.append(node)
+	for node in n_closest_neighbors:
+		if node in G:
+			for neighbor in G[node]:
+				if neighbor in n_closest_neighbors:
+					graph.add_edge(node, neighbor)
 
-	for node in nClosestNeighbors:
-		if node in graph:
-			for neighbor in graph[node]:
-				if neighbor in nClosestNeighbors:
-					subGraph.add_edge(node, neighbor)
+	# printGraph(graph)
 
-	return subGraph
+	return graph
 
 def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	graph = nx.Graph()
 
 	atomic_numbers = slab.get_atomic_numbers()
-	for atom1, distance in enumerate(slab.get_all_distances()):
+	all_distances = slab.get_all_distances()
+	for atom1, distances in enumerate(all_distances):
 		atom1_cr = ase.data.covalent_radii[atomic_numbers[atom1]]
-		for atom2, value in enumerate(distance):
+		for atom2, distance in enumerate(distances):
 			if atom1 != atom2:
 				atom2_cr = ase.data.covalent_radii[atomic_numbers[atom2]]
 				# if the distance between two atoms is less than the sum of their covalent radii, they are considered bonded.
-				if (slab.get_distance(atom1, atom2) < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
+				if (distance < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
 					graph.add_edge(atom1, atom2)
 
 	return graph
@@ -149,7 +147,7 @@ def main():
 
 	slab = ase.io.read(filename)
 
-	print("slab %s read with success" % filename)
+	print("Slab %s read with success" % filename)
 
 	# ase.visualize.view(slab)
 
@@ -159,7 +157,7 @@ def main():
 		print("No nodes found in graph. Check covalent_radii_cut_off")
 		return
 
-	print("Total nodes: %d" % total_nodes)
+	print("Graph created with success. Nodes found: %d" % total_nodes)
 
 	# printGraph(G)
 
