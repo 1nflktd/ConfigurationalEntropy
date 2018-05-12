@@ -83,7 +83,8 @@ for node in nClosestNeighbors:
 			subGraph.add_edge(node, neighbor)
 
 view(slab)
-# nx.draw(graph, with_labels=True)
-# plt.show()
+plt.figure(1)
+nx.draw(graph, with_labels=True)
+plt.figure(2)
 nx.draw(subGraph, with_labels=True)
 plt.show()

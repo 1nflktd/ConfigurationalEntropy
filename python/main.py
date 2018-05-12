@@ -1,87 +1,16 @@
 import sys
 import networkx as nx
 import matplotlib.pyplot as plt
-import random as rd
+import random
 import math
+import ase
+import ase.io
+import ase.data
+import ase.visualize
+import operator
 
-def generateSubgraphs(G, m, n):
-	graphs = []
-	generatedVertices = []
-
-	i = 0
-	while i < m:
-		vertex = rd.randint(0, len(G.nodes) - 1) # random number
-
-		if vertex in generatedVertices:
-			continue
-
-		generatedVertices.append(vertex)
-
-		graph = nx.Graph(isoLabel=0)
-
-		vertexPositions = [vertex]
-		visitedVertices = {}
-		neighborsFound = [0] # workaround to pass by reference
-
-		searchNeighbors(G, vertex, m, n - 1, graph, vertexPositions, neighborsFound, visitedVertices)
-
-		graphs.append(graph)
-		i += 1
-
-	return graphs
-
-
-def searchNeighbors(G, vertex, m, n, graph, vertexPositions, neighborsFound, visitedVertices):
-	if neighborsFound[0] >= n:
-		return
-
-	if vertex in visitedVertices and visitedVertices[vertex]:
-		return
-
-	if vertex not in vertexPositions:
-		return
-
-	posVertex = vertexPositions.index(vertex)
-	visitedVertices[vertex] = True
-
-	v = 0
-	while True:
-		if v >= G.number_of_nodes() or neighborsFound[0] >= n:
-			break
-
-		if G.has_edge(vertex, v):
-			if v not in vertexPositions:
-				neighborsFound[0] += 1
-
-				vertexPositions.append(v)
-
-				posInserted = len(vertexPositions) - 1
-			else:
-				posInserted = vertexPositions.index(v)
-
-			graph.add_edge(posVertex, posInserted)
-			graph.node[posInserted]["originalLabel"] = v
-			graph.node[posVertex]["originalLabel"] = vertex
-
-		v += 1
-
-	if neighborsFound[0] < n:
-		# found not visited neighbor
-		for v in vertexPositions:
-			if v not in visitedVertices or not visitedVertices[v]:
-				searchNeighbors(G, v, m, n, graph, vertexPositions, neighborsFound, visitedVertices)
-
-
-def printGraph(graph):
-	originalLabels = {}
-	for node in graph.nodes:
-		originalLabels[node] = graph.node[node]["originalLabel"]
-
-	nx.draw(graph, with_labels=True, labels=originalLabels)
-	plt.show()
-
-def run(G, m, n):
-	graphs = generateSubgraphs(G, m, n)
+def run(G, m, n, slab):
+	graphs = generateSubgraphs(G, m, n, slab)
 
 	graphsLabelQty = {}
 	isoLabel = 1
@@ -116,13 +45,123 @@ def run(G, m, n):
 	print("Different graph topologies %d" % (isoLabel - 1))
 	print("Shannon entropy %f" % shannonEntropy)
 
-def main():
-	G = nx.read_adjlist("files/graph1.x", nodetype=int)
-	G = nx.convert_node_labels_to_integers(G, 0)
+def generateSubgraphs(G, m, n, slab):
+	graphs = []
 
-	n = 12
-	m = 10
-	run(G, m, n)
+	(dmax, dmin) = getMaxMinSlab(slab)
+
+	i = 0
+	while i < m:
+		(x, y, z) = generateRandomPoint(dmax, dmin)
+		orderedDistances = getOrderedDistancesFromPoint(slab, x, y, z)
+
+		# print(x, y, z)
+
+		graph = generateSubGraph(G, n, orderedDistances)
+
+		# printGraph(graph)
+
+		graphs.append(graph)
+		i += 1
+
+	return graphs
+
+def getMaxMinSlab(slab):
+	(dmax, dmin) = (
+		{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }, # x, y, z
+		{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") }  # x, y, z
+	)
+
+	for distance in slab.get_positions():
+		for idx, d in enumerate(distance):
+			if (d > dmax[idx]):
+				dmax[idx] = d
+			if (d < dmin[idx]):
+				dmin[idx] = d
+
+	return (dmax, dmin)
+
+def generateRandomPoint(dmin, dmax):
+	x = random.uniform(dmin[0], dmax[0])
+	y = random.uniform(dmin[1], dmax[1])
+	z = random.uniform(dmin[2], dmax[2])
+
+	return (x, y, z)
+
+def getOrderedDistancesFromPoint(slab, x, y, z):
+	distances = {}
+	for idx, distance in enumerate(slab.get_positions()):
+		distances[idx] = math.sqrt((x - distance[0]) ** 2 + (y - distance[1]) ** 2 + (z - distance[2]) ** 2)
+
+	return sorted(distances.items(), key=operator.itemgetter(1))
+
+def generateSubGraph(graph, n, orderedDistances):
+	subGraph = nx.Graph(isoLabel=0)
+
+	i = 0
+	nClosestNeighbors = []
+	for node, distance in orderedDistances:
+		if i >= n:
+			break
+		i += 1
+		nClosestNeighbors.append(node)
+
+	for node in nClosestNeighbors:
+		if node in graph:
+			for neighbor in graph[node]:
+				if neighbor in nClosestNeighbors:
+					subGraph.add_edge(node, neighbor)
+
+	return subGraph
+
+def generateGraphFromSlab(slab, covalent_radii_cut_off):
+	graph = nx.Graph()
+
+	atomic_numbers = slab.get_atomic_numbers()
+	for atom1, distance in enumerate(slab.get_all_distances()):
+		atom1_cr = ase.data.covalent_radii[atomic_numbers[atom1]]
+		for atom2, value in enumerate(distance):
+			if atom1 != atom2:
+				atom2_cr = ase.data.covalent_radii[atomic_numbers[atom2]]
+				# if the distance between two atoms is less than the sum of their covalent radii, they are considered bonded.
+				if (slab.get_distance(atom1, atom2) < ((atom1_cr + atom2_cr) * covalent_radii_cut_off)):
+					graph.add_edge(atom1, atom2)
+
+	return graph
+
+def printGraph(graph):
+	nx.draw(graph, with_labels=True)
+	plt.show()
+
+def main():
+	if len(sys.argv) < 5:
+		print("1 parameter: xyz filename.\n2 parameter: m.\n3 parameter: n\n4 parameter: covalent_radii_cut_off")
+		return
+
+	filename = sys.argv[1]
+	m = sys.argv[2] # 100
+	n = sys.argv[3] # 8
+	covalent_radii_cut_off = sys.argv[4] # 1.12
+
+	print("Starting script...")
+
+	slab = ase.io.read(filename)
+
+	print("slab %s read with success" % filename)
+
+	# ase.visualize.view(slab)
+
+	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
+	total_nodes = len(G)
+	if total_nodes == 0:
+		print("No nodes found in graph. Check covalent_radii_cut_off")
+		return
+
+	print("Total nodes: %d" % total_nodes)
+
+	# printGraph(G)
+
+	run(G, m, n, slab)
 
 if __name__ == "__main__":
 	main()
