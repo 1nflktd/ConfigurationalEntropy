@@ -113,6 +113,9 @@ def generateSubGraph(G, n, n_closest_neighbors):
 
 	for node in n_closest_neighbors:
 		if node in G:
+			if node not in graph:
+				graph.add_node(node)
+
 			for neighbor in G[node]:
 				if neighbor in n_closest_neighbors:
 					graph.add_edge(node, neighbor)
@@ -128,6 +131,9 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	# all_distances = slab.get_all_distances()
 	all_distances = slab.get_all_distances(mic=True)
 	for atom1, distances in enumerate(all_distances):
+		if atom1 not in graph:
+			graph.add_node(atom1) # add nodes not bonded
+
 		atom1_cr = ase.data.covalent_radii[atomic_numbers[atom1]]
 		for atom2, distance in enumerate(distances):
 			if atom1 != atom2:
