@@ -8,6 +8,7 @@ import ase.io
 import ase.data
 import ase.visualize
 import operator
+import numpy as np
 
 def run(G, m, n, slab):
 	graphs = generateSubgraphs(G, m, n, slab)
@@ -21,6 +22,8 @@ def run(G, m, n, slab):
 				iso_label_j = graphs[j].graph["isoLabel"]
 
 				if iso_label_i == 0 and iso_label_j == 0:
+					# printGraph(graphs[i])
+
 					graphs[i].graph["isoLabel"] = iso_label
 					graphs[j].graph["isoLabel"] = iso_label
 					label_total[iso_label] = 2
@@ -48,11 +51,11 @@ def run(G, m, n, slab):
 def generateSubgraphs(G, m, n, slab):
 	graphs = []
 
-	(dmax, dmin) = getMaxMinSlab(slab)
+	(dmin, dmax) = getMaxMinSlab(slab)
 
 	i = 0
 	while i < m:
-		(x, y, z) = generateRandomPoint(dmax, dmin)
+		(x, y, z) = generateRandomPoint(dmin, dmax)
 		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
 
 		# print(x, y, z)
@@ -67,12 +70,12 @@ def generateSubgraphs(G, m, n, slab):
 	return graphs
 
 def getMaxMinSlab(slab):
-	(dmax, dmin) = (
-		{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }, # x, y, z
-		{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") }  # x, y, z
+	(dmin, dmax) = (
+		{ 0:  float("Inf"), 1:  float("Inf"), 2:  float("Inf") },  # x, y, z
+		{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }   # x, y, z
 	)
 
-	positions = slab.get_positions()
+	positions = slab.get_positions() # wrap atoms back to simulation cell ? default: wrap=False
 	for distance in positions:
 		for idx, d in enumerate(distance):
 			if (d > dmax[idx]):
@@ -80,7 +83,7 @@ def getMaxMinSlab(slab):
 			if (d < dmin[idx]):
 				dmin[idx] = d
 
-	return (dmax, dmin)
+	return (dmin, dmax)
 
 def generateRandomPoint(dmin, dmax):
 	x = random.uniform(dmin[0], dmax[0])
@@ -90,10 +93,17 @@ def generateRandomPoint(dmin, dmax):
 	return (x, y, z)
 
 def getNClosestNeighborsFromPoint(slab, n, x, y, z):
+	slab.append(ase.Atom('Cu', (x, y, z)))
+	idxAtom = len(slab) - 1
+	all_distances = slab.get_all_distances(mic=True)[idxAtom]
+	# all_distances = slab.get_all_distances()[idxAtom]
+	slab.pop()
+
 	distances = {}
-	positions = slab.get_positions()
-	for idx, distance in enumerate(positions):
-		distances[idx] = math.sqrt((x - distance[0]) ** 2 + (y - distance[1]) ** 2 + (z - distance[2]) ** 2)
+	for idx, distance in enumerate(all_distances):
+		if idx == idxAtom:
+			break
+		distances[idx] = distance
 
 	n_first = sorted(distances.items(), key=operator.itemgetter(1))[:n] # return list of tuples
 	return [i[0] for i in n_first] # return only the first element in list
@@ -115,7 +125,8 @@ def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	graph = nx.Graph()
 
 	atomic_numbers = slab.get_atomic_numbers()
-	all_distances = slab.get_all_distances()
+	# all_distances = slab.get_all_distances()
+	all_distances = slab.get_all_distances(mic=True)
 	for atom1, distances in enumerate(all_distances):
 		atom1_cr = ase.data.covalent_radii[atomic_numbers[atom1]]
 		for atom2, distance in enumerate(distances):
