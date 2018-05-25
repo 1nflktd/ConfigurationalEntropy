@@ -8,9 +8,8 @@ import ase.io
 import ase.data
 import ase.visualize
 import operator
-import numpy as np
 
-def run(G, m, n, slab):
+def run(G, m, n, slab, c):
 	graphs = generateSubgraphs(G, m, n, slab)
 
 	label_total = {}
@@ -40,13 +39,33 @@ def run(G, m, n, slab):
 					print("gi", graphs[i].edges)
 					print("gj", graphs[j].edges)
 
-	shannon_entropy = 0
+	H_n = 0.0
+	H1n = 0.0
 	for i in range(1, iso_label):
-		pi = float(label_total[i]) / m
-		shannon_entropy -= pi * math.log(pi)
+		fi = float(label_total[i])
+		H_n = calcShannonEntropy(H_n, fi, m)
+		if fi == 1.0:
+			H1n = calcShannonEntropy(H1n, fi, m)
+
+	H_n_extrapolated = H_n + (c * (H1n / H_n))
+	# dimensions always = 3 ?
+	spatial_dimensions = 3
+	g_n = (spatial_dimensions - 1) * math.log(n)
+	Hc_n = H_n - g_n
 
 	print("Different graph topologies %d" % (iso_label - 1))
-	print("Shannon entropy %f" % shannon_entropy)
+	print("Shannon entropy: H(n) = %f" % H_n)
+	print("H1(n) = %f" % H1n)
+	print("Extrapolated H(n) = %f" % H_n_extrapolated)
+	print("g(n) = %f" % g_n)
+	print("Corrected H(n) = %f" % Hc_n)
+	if H1n > (H_n / 100): # se H1n exceder 1% de H_n, nao e uma amostra valida
+		print("H1(n) exceeds 1% of H(n). Not a valid measurement.")
+
+def calcShannonEntropy(Hn, fi, m):
+	pi = fi / m
+	Hn -= pi * math.log(pi)
+	return Hn
 
 def generateSubgraphs(G, m, n, slab):
 	graphs = []
@@ -149,14 +168,15 @@ def printGraph(graph):
 	plt.show()
 
 def main():
-	if len(sys.argv) < 5:
-		print("1 parameter: xyz filename\n2 parameter: m\n3 parameter: n\n4 parameter: covalent_radii_cut_off")
+	if len(sys.argv) < 6:
+		print("1 parameter: xyz filename\n2 parameter: m\n3 parameter: n\n4 parameter: covalent_radii_cut_off\n5 parameter: c")
 		return
 
 	filename = sys.argv[1]
 	m = int(sys.argv[2]) # 100
 	n = int(sys.argv[3]) # 8
 	covalent_radii_cut_off = float(sys.argv[4]) # 1.12
+	c = float(sys.argv[5])
 
 	print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\n" % (filename, m, n, covalent_radii_cut_off))
 
@@ -178,7 +198,7 @@ def main():
 
 	# printGraph(G)
 
-	run(G, m, n, slab)
+	run(G, m, n, slab, c)
 
 if __name__ == "__main__":
 	main()
