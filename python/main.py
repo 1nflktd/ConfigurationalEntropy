@@ -39,6 +39,12 @@ def run(G, m, n, slab, c):
 					print("gi", graphs[i].edges)
 					print("gj", graphs[j].edges)
 
+	# get all graphs that are not isomorphic with any other
+	for g in graphs:
+		if g.graph["isoLabel"] == 0:
+			label_total[iso_label] = 1
+			iso_label += 1
+
 	H_n = 0.0
 	H1n = 0.0
 	for i in range(1, iso_label):
@@ -53,6 +59,7 @@ def run(G, m, n, slab, c):
 	g_n = (spatial_dimensions - 1) * math.log(n)
 	Hc_n = H_n - g_n
 
+	#print("label_total ", label_total)
 	print("Different graph topologies %d" % (iso_label - 1))
 	print("Shannon entropy: H(n) = %f" % H_n)
 	print("H1(n) = %f" % H1n)
@@ -94,7 +101,7 @@ def getMaxMinSlab(slab):
 		{ 0: -float("Inf"), 1: -float("Inf"), 2: -float("Inf") }   # x, y, z
 	)
 
-	positions = slab.get_positions() # wrap atoms back to simulation cell ? default: wrap=False
+	positions = slab.get_positions(wrap=True) # wrap atoms back to simulation cell ? default: wrap=False
 	for distance in positions:
 		for idx, d in enumerate(distance):
 			if (d > dmax[idx]):
