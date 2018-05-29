@@ -53,7 +53,11 @@ def run(G, m, n, slab, c):
 		if fi == 1.0:
 			H1n = calcShannonEntropy(H1n, fi, m)
 
-	H_n_extrapolated = H_n + (c * (H1n / H_n))
+	H1nDiv = 0.0
+	if H_n > 0:
+		H1nDiv = (H1n / H_n)
+
+	H_n_extrapolated = H_n + (c * H1nDiv)
 	# dimensions always = 3 ?
 	spatial_dimensions = 3
 	g_n = (spatial_dimensions - 1) * math.log(n)
@@ -185,7 +189,7 @@ def main():
 	covalent_radii_cut_off = float(sys.argv[4]) # 1.12
 	c = float(sys.argv[5])
 
-	print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\n" % (filename, m, n, covalent_radii_cut_off))
+	print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\nc = %f\n" % (filename, m, n, covalent_radii_cut_off, c))
 
 	print("Starting script...")
 
