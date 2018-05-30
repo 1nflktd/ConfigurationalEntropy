@@ -19,7 +19,7 @@ def run(G, m, n, slab, c):
 			iso_label_i = graphs[i].graph["isoLabel"]
 			iso_label_j = graphs[j].graph["isoLabel"]
 			
-			if iso_label_i == 0 || iso_label_j == 0:
+			if iso_label_i == 0 or iso_label_j == 0:
 				if nx.is_isomorphic(graphs[i], graphs[j]):
 					if iso_label_i == 0 and iso_label_j == 0:
 						# printGraph(graphs[i])
