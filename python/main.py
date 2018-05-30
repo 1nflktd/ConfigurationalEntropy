@@ -16,28 +16,29 @@ def run(G, m, n, slab, c):
 	iso_label = 1
 	for i in range(len(graphs)):
 		for j in range(i + 1, len(graphs)):
-			if nx.is_isomorphic(graphs[i], graphs[j]):
-				iso_label_i = graphs[i].graph["isoLabel"]
-				iso_label_j = graphs[j].graph["isoLabel"]
+			iso_label_i = graphs[i].graph["isoLabel"]
+			iso_label_j = graphs[j].graph["isoLabel"]
+			
+			if iso_label_i == 0 || iso_label_j == 0:
+				if nx.is_isomorphic(graphs[i], graphs[j]):
+					if iso_label_i == 0 and iso_label_j == 0:
+						# printGraph(graphs[i])
 
-				if iso_label_i == 0 and iso_label_j == 0:
-					# printGraph(graphs[i])
-
-					graphs[i].graph["isoLabel"] = iso_label
-					graphs[j].graph["isoLabel"] = iso_label
-					label_total[iso_label] = 2
-					iso_label += 1 # label already used
-				elif iso_label_i > 0 and iso_label_j == 0:
-					graphs[j].graph["isoLabel"] = iso_label_i
-					label_total[iso_label_i] += 1
-				elif iso_label_j > 0 and iso_label_i == 0:
-					graphs[i].graph["isoLabel"] = iso_label_j
-					label_total[iso_label_j] += 1
-				elif iso_label_i != iso_label_j:
-					# throw error ?
-					print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
-					print("gi", graphs[i].edges)
-					print("gj", graphs[j].edges)
+						graphs[i].graph["isoLabel"] = iso_label
+						graphs[j].graph["isoLabel"] = iso_label
+						label_total[iso_label] = 2
+						iso_label += 1 # label already used
+					elif iso_label_i > 0 and iso_label_j == 0:
+						graphs[j].graph["isoLabel"] = iso_label_i
+						label_total[iso_label_i] += 1
+					elif iso_label_j > 0 and iso_label_i == 0:
+						graphs[i].graph["isoLabel"] = iso_label_j
+						label_total[iso_label_j] += 1
+					elif iso_label_i != iso_label_j:
+						# throw error ?
+						print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
+						print("gi", graphs[i].edges)
+						print("gj", graphs[j].edges)
 
 	# get all graphs that are not isomorphic with any other
 	for g in graphs:
