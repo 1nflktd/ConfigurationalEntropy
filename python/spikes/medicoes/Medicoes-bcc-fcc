@@ -1,0 +1,136 @@
+Medicoes-bcc-fcc
+
+bcc.xyz
+
+time python2 main.py graph_files/bcc.xyz 15000 6 1.2 1.2
+
+n = 5
+m = 3060
+Corrected H(n) = -3.218876
+
+n = 6
+m = 4060
+Corrected H(n) = -3.583519
+
+n = 7
+m = 6000
+Corrected H(n) = -3.891820
+
+n = 8
+m = 7900
+Corrected H(n) = -4.158883
+
+n = 9
+m = 10000
+Corrected H(n) = -4.394449
+
+n = 10
+m = 12240
+Corrected H(n) = -4.605170
+
+n = 11
+m = 15000
+Corrected H(n) = -4.795791
+
+n = 12
+m = 18000
+Corrected H(n) = -4.969813
+
+n = 13
+m = 21000
+Corrected H(n) = -5.129899
+
+n = 14
+m = 24000
+Corrected H(n) = -5.278115
+
+n = 15
+n = 27540
+Corrected H(n) = -5.416100
+
+
+fcc.xyz
+
+time python2 main.py graph_files/fcc.xyz 27540 15 1.2 1.2
+
+
+time python2 main.py graph_files/fcc.xyz 4080 5 1.2 1.2
+n = 5
+m = 4080
+Corrected H(n) = -2.143734
+
+time python2 main.py graph_files/fcc.xyz 6000 6 1.2 1.2
+n = 6
+m = 6000
+Corrected H(n) = -1.822249
+
+time python2 main.py graph_files/fcc.xyz 8000 7 1.2 1.2
+n = 7
+m = 8000
+Corrected H(n) = -2.065562
+
+time python2 main.py graph_files/fcc.xyz 10500 8 1.2 1.2
+n = 8
+m = 10500
+Corrected H(n) = -2.332487
+
+time python2 main.py graph_files/fcc.xyz 13300 9 1.2 1.2
+n = 9
+m = 13300
+Corrected H(n) = -2.227890
+
+time python2 main.py graph_files/fcc.xyz 16500 10 1.2 1.2
+n = 10
+m = 16500
+Corrected H(n) = -2.069802
+
+time python2 main.py graph_files/fcc.xyz 20000 11 1.2 1.2
+n = 11
+m = 20000
+Corrected H(n) = -2.172152
+
+time python2 main.py graph_files/fcc.xyz 23500 12 1.2 1.2
+n = 12
+m = 23500
+Corrected H(n) = -1.955184
+
+time python2 main.py graph_files/fcc.xyz 27600 13 1.2 1.2
+n = 13
+m = 27600
+Corrected H(n) = -2.210590
+
+time python2 main.py graph_files/fcc.xyz 32000 14 1.2 1.2
+n = 14
+m = 32000
+Corrected H(n) = -2.291144
+
+time python2 main.py graph_files/fcc.xyz 37000 15 1.2 1.2
+n = 15
+m = 37000
+Corrected H(n) = -2.263685
+
+time python2 main.py graph_files/fcc.xyz 41800 16 1.2 1.2
+n = 16
+m = 41800
+Corrected H(n) = -2.157369
+
+time python2 main.py graph_files/fcc.xyz 47500 17 1.2 1.2
+n = 17
+m = 47500
+Corrected H(n) = -2.219241
+
+time python2 main.py graph_files/fcc.xyz 53000 18 1.2 1.2
+n = 18
+m = 53000
+Corrected H(n) = -2.396428
+
+time python2 main.py graph_files/fcc.xyz 59000 19 1.2 1.2
+n = 19
+m = 59000
+Corrected H(n) = -2.452534
+
+time python2 main.py graph_files/fcc.xyz 65300 20 1.2 1.2
+n = 20
+m = 65300
+Corrected H(n) = -2.571260
+
