@@ -12,4 +12,5 @@ b, m = polyfit(x, y, 1)
 
 plt.plot(x, y, '.')
 plt.plot(x, b + m * x, '-')
+plt.axis([0, 10, -2, 100])
 plt.show()

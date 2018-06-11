@@ -68,6 +68,7 @@ def run(q, G, m, n, slab, c):
 	Hc_n = H_n - g_n
 
 	#print("label_total ", label_total)
+	"""
 	print("Different graph topologies %d" % (iso_label - 1))
 	print("Shannon entropy: H(n) = %f" % H_n)
 	print("H1(n) = %f" % H1n)
@@ -76,6 +77,7 @@ def run(q, G, m, n, slab, c):
 	print("Corrected H(n) = %f" % Hc_n)
 	if H1n > (H_n / 100): # se H1n exceder 1% de H_n, nao e uma amostra valida
 		print("H1(n) exceeds 1% of H(n). Not a valid measurement.")
+	"""
 
 	q.put((n, Hc_n))
 
@@ -188,16 +190,16 @@ def printGraph(graph):
 
 def main():
 	if len(sys.argv) < 6:
-		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial m\n5 parameter: final m")
+		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n")
 		return
 
 	filename = sys.argv[1]
 	covalent_radii_cut_off = float(sys.argv[2]) # 1.12
 	c = float(sys.argv[3])
-	m1 = int(sys.argv[4])
-	m2 = int(sys.argv[5])
+	n1 = int(sys.argv[4])
+	n2 = int(sys.argv[5])
 
-	if m1 > m2:
+	if n1 > n2:
 		print("Final m cannot be smaller than initial m")
 		return
 
@@ -219,7 +221,7 @@ def main():
 
 	q = Queue()
 	processes = []
-	for n in range(m1, m2):
+	for n in range(n1, n2):
 		m = 3.4 * (n * n) * total_nodes
 
 		# print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\nc = %f" % (filename, m, n, covalent_radii_cut_off, c))
@@ -235,18 +237,22 @@ def main():
 
 	hcn_values = []
 	for p in processes:
-		ret = q.get()
-		hcn_values.append(ret)
-		print("n = %f, Hc(n) = %f" % (ret[0], ret[1]))
+		n, hcn = q.get()
+		n = int(n)
+		hcn_values.append((n, hcn))
+		print("n = %d, Hc(n) = %f" % (n, hcn))
 
 	for p in processes:
 		p.join()
 
 	x, y = zip(*hcn_values)
+	x = np.asarray(x)
+	y = np.asarray(y)
 	# straight line fit
 	b, m = polyfit(x, y, 1) # m equals the slope of the line
 	plt.scatter(x, y)
 	plt.plot(x, b + m * x, '-')
+	plt.axis([n1, n2, -2, 10])
 	plt.show()
 
 	print("Estimated configurational entropy = %f" % (m))
