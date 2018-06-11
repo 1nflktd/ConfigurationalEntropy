@@ -8,8 +8,11 @@ import ase.io
 import ase.data
 import ase.visualize
 import operator
+import numpy as np
+from numpy.polynomial.polynomial import polyfit
+from multiprocessing import Process, Queue
 
-def run(G, m, n, slab, c):
+def run(q, G, m, n, slab, c):
 	graphs = generateSubgraphs(G, m, n, slab)
 
 	label_total = {}
@@ -72,6 +75,10 @@ def run(G, m, n, slab, c):
 	print("Corrected H(n) = %f" % Hc_n)
 	if H1n > (H_n / 100): # se H1n exceder 1% de H_n, nao e uma amostra valida
 		print("H1(n) exceeds 1% of H(n). Not a valid measurement.")
+
+	q.put((n, Hc_n))
+
+	return Hc_n
 
 def calcShannonEntropy(Hn, fi, m):
 	pi = fi / m
@@ -180,16 +187,18 @@ def printGraph(graph):
 
 def main():
 	if len(sys.argv) < 6:
-		print("1 parameter: xyz filename\n2 parameter: m\n3 parameter: n\n4 parameter: covalent_radii_cut_off\n5 parameter: c")
+		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial m\n5 parameter: final m")
 		return
 
 	filename = sys.argv[1]
-	m = int(sys.argv[2]) # 100
-	n = int(sys.argv[3]) # 8
-	covalent_radii_cut_off = float(sys.argv[4]) # 1.12
-	c = float(sys.argv[5])
+	covalent_radii_cut_off = float(sys.argv[2]) # 1.12
+	c = float(sys.argv[3])
+	m1 = int(sys.argv[4])
+	m2 = int(sys.argv[5])
 
-	print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\nc = %f\n" % (filename, m, n, covalent_radii_cut_off, c))
+	if m1 > m2:
+		print("Final m cannot be smaller than initial m")
+		return
 
 	print("Starting script...")
 
@@ -207,9 +216,40 @@ def main():
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
-	# printGraph(G)
+	q = Queue()
+	processes = []
+	for n in range(m1, m2):
+		m = 3.4 * (n * n) * total_nodes
 
-	run(G, m, n, slab, c)
+		# print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\nc = %f" % (filename, m, n, covalent_radii_cut_off, c))
+
+		# printGraph(G)
+
+		# hcn = run(G, m, n, slab, c)
+		p = Process(target=run, args=(q, G, m, n, slab, c, ))
+		p.start()
+		processes.append(p)
+
+		# print("n = %f, Hc(n) = %f" % (n, hcn))
+
+	hcn_values = []
+	for p in processes:
+		ret = q.get()
+		hcn_values.append(ret)
+		print("n = %f, Hc(n) = %f" % (ret[0], ret[1]))
+
+	for p in processes:
+		p.join()
+
+	x, y = zip(*hcn_values)
+	# straight line fit
+	b, m = polyfit(x, y, 1) # m equals the slope of the line
+	plt.scatter(x, y)
+	plt.plot(x, b + m * x, '-')
+	plt.show()
+
+	print("Estimated configurational entropy = %f" % (m))
+
 
 if __name__ == "__main__":
 	main()
