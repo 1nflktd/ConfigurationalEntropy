@@ -10,10 +10,11 @@ import ase.visualize
 import operator
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
-from multiprocessing import Process, Queue
+import threading
+import Queue
 
-def run(q, G, m, n, slab, c):
-	graphs = generateSubgraphs(G, m, n, slab)
+def run(q, lock, G, m, n, slab, c):
+	graphs = generateSubgraphs(lock, G, m, n, slab)
 
 	label_total = {}
 	iso_label = 1
@@ -21,7 +22,7 @@ def run(q, G, m, n, slab, c):
 		for j in range(i + 1, len(graphs)):
 			iso_label_i = graphs[i].graph["isoLabel"]
 			iso_label_j = graphs[j].graph["isoLabel"]
-			
+
 			if iso_label_i == 0 or iso_label_j == 0:
 				if nx.is_isomorphic(graphs[i], graphs[j]):
 					if iso_label_i == 0 and iso_label_j == 0:
@@ -68,7 +69,8 @@ def run(q, G, m, n, slab, c):
 	Hc_n = H_n - g_n
 
 	#print("label_total ", label_total)
-	"""
+	#"""
+	print("n %d" % (n))
 	print("Different graph topologies %d" % (iso_label - 1))
 	print("Shannon entropy: H(n) = %f" % H_n)
 	print("H1(n) = %f" % H1n)
@@ -77,7 +79,7 @@ def run(q, G, m, n, slab, c):
 	print("Corrected H(n) = %f" % Hc_n)
 	if H1n > (H_n / 100): # se H1n exceder 1% de H_n, nao e uma amostra valida
 		print("H1(n) exceeds 1% of H(n). Not a valid measurement.")
-	"""
+	#"""
 
 	q.put((n, Hc_n))
 
@@ -88,7 +90,7 @@ def calcShannonEntropy(Hn, fi, m):
 	Hn -= pi * math.log(pi)
 	return Hn
 
-def generateSubgraphs(G, m, n, slab):
+def generateSubgraphs(lock, G, m, n, slab):
 	graphs = []
 
 	(dmin, dmax) = getMaxMinSlab(slab)
@@ -96,7 +98,7 @@ def generateSubgraphs(G, m, n, slab):
 	i = 0
 	while i < m:
 		(x, y, z) = generateRandomPoint(dmin, dmax)
-		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
+		n_closest_neighbors = getNClosestNeighborsFromPoint(lock, slab, n, x, y, z)
 
 		# print(x, y, z)
 
@@ -132,14 +134,16 @@ def generateRandomPoint(dmin, dmax):
 
 	return (x, y, z)
 
-def getNClosestNeighborsFromPoint(slab, n, x, y, z):
+def getNClosestNeighborsFromPoint(lock, slab, n, x, y, z):
 	atomic_numbers = slab.get_atomic_numbers()
 
+	lock.acquire()
 	slab.append(ase.Atom(atomic_numbers[0], (x, y, z))) # get the first atom
 	idxAtom = len(slab) - 1
 	all_distances = slab.get_all_distances(mic=True)[idxAtom]
 	# all_distances = slab.get_all_distances()[idxAtom]
 	slab.pop()
+	lock.release()
 
 	distances = {}
 	for idx, distance in enumerate(all_distances):
@@ -221,7 +225,8 @@ def main():
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
-	q = Queue()
+	q = Queue.Queue()
+	lock = threading.Lock()
 	processes = []
 	for n in range(n1, n2):
 		m = 3.4 * (n * n) * total_nodes
@@ -231,11 +236,17 @@ def main():
 		# printGraph(G)
 
 		# hcn = run(G, m, n, slab, c)
-		p = Process(target=run, args=(q, G, m, n, slab, c, ))
-		p.start()
+		p = threading.Thread(target=run, args=(q, lock, G, m, n, slab, c, ))
+		#p.start()
 		processes.append(p)
 
 		# print("n = %f, Hc(n) = %f" % (n, hcn))
+
+	for p in processes:
+		p.start()
+
+	for p in processes:
+		p.join()
 
 	hcn_values = []
 	for p in processes:
@@ -244,8 +255,6 @@ def main():
 		hcn_values.append((n, hcn))
 		print("n = %d, Hc(n) = %f" % (n, hcn))
 
-	for p in processes:
-		p.join()
 
 	x, y = zip(*hcn_values)
 	x = np.asarray(x)
