@@ -133,7 +133,9 @@ def generateRandomPoint(dmin, dmax):
 	return (x, y, z)
 
 def getNClosestNeighborsFromPoint(slab, n, x, y, z):
-	slab.append(ase.Atom('Cu', (x, y, z)))
+	atomic_numbers = slab.get_atomic_numbers()
+
+	slab.append(ase.Atom(atomic_numbers[0], (x, y, z))) # get the first atom
 	idxAtom = len(slab) - 1
 	all_distances = slab.get_all_distances(mic=True)[idxAtom]
 	# all_distances = slab.get_all_distances()[idxAtom]
@@ -213,8 +215,8 @@ def main():
 
 	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
 	total_nodes = len(G)
-	if total_nodes == 0:
-		print("No nodes found in graph. Check covalent_radii_cut_off")
+	if total_nodes == 0 or G.number_of_edges() == 0:
+		print("No edges found in graph. Check covalent_radii_cut_off")
 		return
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
@@ -252,7 +254,7 @@ def main():
 	b, m = polyfit(x, y, 1) # m equals the slope of the line
 	plt.scatter(x, y)
 	plt.plot(x, b + m * x, '-')
-	plt.axis([n1, n2, -2, 10])
+	plt.axis([n1, n2, -5, 10])
 	plt.show()
 
 	print("Estimated configurational entropy = %f" % (m))
