@@ -139,4 +139,28 @@ Extrapolated H(n) = 3.737802
 g(n) = 5.666427
 Corrected H(n) = -1.929005
 n = 17, Hc(n) = -1.929005
-Estimated configurational entropy = 0.027576
+
+n 18
+Different graph topologies 93
+Shannon entropy: H(n) = 3.715520
+H1(n) = 0.000000
+Extrapolated H(n) = 3.715520
+g(n) = 5.780744
+Corrected H(n) = -2.065224
+
+n 19
+Different graph topologies 96
+Shannon entropy: H(n) = 3.743437
+H1(n) = 0.001210
+Extrapolated H(n) = 3.743825
+g(n) = 5.888878
+Corrected H(n) = -2.145441
+
+n 20
+Different graph topologies 101
+Shannon entropy: H(n) = 3.577564
+H1(n) = 0.001985
+Extrapolated H(n) = 3.578230
+g(n) = 5.991465
+Corrected H(n) = -2.413901
+
