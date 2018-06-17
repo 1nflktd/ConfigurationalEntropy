@@ -1,3 +1,5 @@
+m = 3.4 * (n * n) * total_nodes
+
 n 3
 Different graph topologies 1
 Shannon entropy: H(n) = -0.000363
@@ -138,4 +140,3 @@ g(n) = 5.666427
 Corrected H(n) = -1.929005
 n = 17, Hc(n) = -1.929005
 Estimated configurational entropy = 0.027576
-

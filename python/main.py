@@ -66,7 +66,7 @@ def run(q, lock, G, m, n, slab, c):
 	# dimensions always = 3 ?
 	spatial_dimensions = 3
 	g_n = (spatial_dimensions - 1) * math.log(n)
-	Hc_n = H_n - g_n
+	Hc_n = H_n_extrapolated - g_n
 
 	#print("label_total ", label_total)
 	#"""
