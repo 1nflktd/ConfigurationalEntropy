@@ -121,3 +121,26 @@ Extrapolated H(n) = 4.309671
 g(n) = 5.666427
 Corrected H(n) = -1.356756
 
+n 18
+Different graph topologies 82
+Shannon entropy: H(n) = 3.710935
+H1(n) = 0.034939
+Extrapolated H(n) = 3.729765
+g(n) = 5.780744
+Corrected H(n) = -2.050978
+
+n 19
+Different graph topologies 79
+Shannon entropy: H(n) = 3.729584
+H1(n) = 0.026666
+Extrapolated H(n) = 3.743884
+g(n) = 5.888878
+Corrected H(n) = -2.144994
+
+n 20
+Different graph topologies 76
+Shannon entropy: H(n) = 3.561302
+H1(n) = 0.019125
+Extrapolated H(n) = 3.572042
+g(n) = 5.991465
+Corrected H(n) = -2.419422
