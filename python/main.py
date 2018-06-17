@@ -229,7 +229,9 @@ def main():
 	lock = threading.Lock()
 	processes = []
 	for n in range(n1, n2):
-		m = 3.4 * (n * n) * total_nodes
+		#m = 3.4 * (n * n) * total_nodes
+		#m = (n * n) * total_nodes
+		m = 3.4 * (n) * total_nodes
 
 		# print("Parameters used:\nGraph = %s\nm = %d\nn = %d\nCovalent radii cut off = %f\nc = %f" % (filename, m, n, covalent_radii_cut_off, c))
 
