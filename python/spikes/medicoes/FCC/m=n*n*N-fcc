@@ -214,3 +214,10 @@ Extrapolated H(n) = 2.462723
 g(n) = 6.734592
 Corrected H(n) = -4.271869
 
+n 30
+Different graph topologies 53
+Shannon entropy: H(n) = 2.328865
+H1(n) = 0.000000
+Extrapolated H(n) = 2.328865
+g(n) = 6.802395
+Corrected H(n) = -4.473530
