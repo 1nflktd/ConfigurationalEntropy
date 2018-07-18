@@ -1,0 +1,1 @@
+g++ -O3 -Wall -shared -std=c++14 -I../pybind11/include -fPIC `python-config --includes` example.cpp -o example.so
