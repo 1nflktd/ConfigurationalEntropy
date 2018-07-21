@@ -6,6 +6,7 @@
 
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/vf2_sub_graph_iso.hpp"
 
 namespace py = pybind11;
 
@@ -27,11 +28,12 @@ struct Graph {
 
 	inline void setIsoLabel(int _isoLabel) { isoLabel = _isoLabel; }
 	inline int getIsoLabel() const { return isoLabel; }
+	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
 	void add_node(int node);
 	void add_edge(int e1, int e2);
 	bool has_node(int node);
 	bool has_neighbor(int node, int neighbor);
-	void printG();
+	void print();
 
 private:
 	int isoLabel;
@@ -71,13 +73,13 @@ bool Graph::has_neighbor(int node, int neighbor) {
 	return boost::edge(mVertexDesc[node], mVertexDesc[neighbor], *this->graph).second;
 }
 
-void Graph::printG() {
+void Graph::print() {
 	std::cout << "-----------------------------\n";
 	std::cout << "vertices:\n";
 	std::cout << boost::num_vertices(*this->graph) << "\n";
 	std::pair<vertex_iterator, vertex_iterator> vi = boost::vertices(*this->graph);
 	for (vertex_iterator vertex_iter = vi.first; vertex_iter != vi.second; ++vertex_iter) {
-	    std::cout << "(" << (*this->graph)[*vertex_iter] << ")\n";
+		std::cout << "(" << (*this->graph)[*vertex_iter] << ")\n";
 	}
 
 	std::cout << "edges:\n";
@@ -87,9 +89,34 @@ void Graph::printG() {
 	for (edge_iterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter) {
 		const auto & vs = boost::source(*edge_iter, *this->graph);
 		const auto & vt = boost::target(*edge_iter, *this->graph);
-	    std::cout << "(" << mDescVertex[vs] << ", " << mDescVertex[vt] << ")\n";
+		std::cout << "(" << mDescVertex[vs] << ", " << mDescVertex[vt] << ")\n";
 	}
 	std::cout << "-----------------------------\n";
+}
+
+template <typename Graph1,typename Graph2>
+struct vf2_callback {
+
+	vf2_callback(const Graph1& graph1, const Graph2& graph2) : graph1_(graph1), graph2_(graph2) {}
+
+	template <typename CorrespondenceMap1To2, typename CorrespondenceMap2To1>
+	bool operator()(CorrespondenceMap1To2, CorrespondenceMap2To1) const {
+		// return on the first mapping found
+		return false;
+	}
+
+private:
+	const Graph1& graph1_;
+	const Graph2& graph2_;
+};
+
+bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
+    vf2_callback<UndirectedGraph, UndirectedGraph> callback(*graph1.getGraph(), *graph2.getGraph());
+
+	bool is_iso = vf2_subgraph_iso(*graph1.getGraph(), *graph2.getGraph(), callback);
+	std::cout << "is_iso: " << is_iso << "\n";
+
+	return is_iso;
 }
 
 PYBIND11_MODULE(boost_graph, m) {
@@ -104,6 +131,8 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def("add_edge", &Graph::add_edge)
 		.def("has_node", &Graph::has_node)
 		.def("has_neighbor", &Graph::has_neighbor)
-		.def("printG", &Graph::printG)
+		.def("print", &Graph::print)
 	;
+
+	m.def("is_isomorphic", &is_isomorphic);
 }
