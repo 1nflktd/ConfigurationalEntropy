@@ -1,6 +1,5 @@
 import boost_graph
 
-"""
 g = boost_graph.Graph()
 g.add_node(2)
 g.add_node(3)
@@ -17,9 +16,9 @@ print g.has_neighbor(2, 3)
 print g.has_neighbor(6, 7)
 print g.has_neighbor(2, 5)
 print g.has_neighbor(4, 4)
-g.print()
-"""
+g.printGraph()
 
+"""
 g1 = boost_graph.Graph()
 g1.add_edge(1, 2);
 g1.add_edge(2, 3);
@@ -31,3 +30,11 @@ g2.add_edge(1, 3);
 g2.add_edge(3, 4);
 
 print boost_graph.is_isomorphic(g1, g2)
+
+print g1.get_neighbors(2)
+print g1.get_neighbors(4)
+print g1.get_neighbors(3)
+print g1.get_neighbors(1)
+print g2.get_neighbors(1)
+print g2.get_neighbors(6)
+"""

@@ -22,6 +22,7 @@ using UndirectedGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::u
 using edge_iterator = boost::graph_traits<UndirectedGraph>::edge_iterator;
 using vertex_iterator = boost::graph_traits<UndirectedGraph>::vertex_iterator;
 using vertex_descriptor = boost::graph_traits<UndirectedGraph>::vertex_descriptor;
+using adjacency_iterator = boost::graph_traits<UndirectedGraph>::adjacency_iterator;
 
 struct Graph {
 	Graph() : isoLabel(0), graph(std::make_shared<UndirectedGraph>()) {}
@@ -32,21 +33,20 @@ struct Graph {
 	void add_node(int node);
 	void add_edge(int e1, int e2);
 	bool has_node(int node);
+	py::list get_neighbors(int node);
 	bool has_neighbor(int node, int neighbor);
-	void print();
+	void printGraph();
 
 private:
 	int isoLabel;
 	std::shared_ptr<UndirectedGraph> graph;
 	std::map<int, vertex_descriptor> mVertexDesc;
-	std::map<vertex_descriptor, int> mDescVertex;
 };
 
 void Graph::add_node(int node) {
 	std::cout << "add_node\n" << node << "\n";
 	vertex_descriptor v = boost::add_vertex(node, *this->graph);
 	mVertexDesc[node] = v;
-	mDescVertex[v] = node;
 }
 
 void Graph::add_edge(int e1, int e2) {
@@ -65,15 +65,31 @@ bool Graph::has_node(int node) {
 }
 
 bool Graph::has_neighbor(int node, int neighbor) {
+	std::cout << "has_neighbor\n" << node << " " << neighbor << "\n";
+
 	if (mVertexDesc.find(node) == mVertexDesc.end()) { return false; }
 	if (mVertexDesc.find(neighbor) == mVertexDesc.end()) { return false; }
-
-	std::cout << "has_neighbor\n" << node << " " << neighbor << "\n";
 
 	return boost::edge(mVertexDesc[node], mVertexDesc[neighbor], *this->graph).second;
 }
 
-void Graph::print() {
+py::list Graph::get_neighbors(int node) {
+	py::list neighbors;
+
+	std::cout << "get_neighbors\n" << node << "\n";
+
+	if (mVertexDesc.find(node) == mVertexDesc.end()) { return neighbors; }
+
+	adjacency_iterator neighbor, neighbor_end;
+	for (tie(neighbor, neighbor_end) = boost::adjacent_vertices(mVertexDesc[node], *this->graph); neighbor != neighbor_end; ++neighbor) {
+		neighbors.append((*this->graph)[*neighbor]);
+	}
+
+	return neighbors;
+}
+
+void Graph::printGraph() {
+	std::cout << "print2\n";
 	std::cout << "-----------------------------\n";
 	std::cout << "vertices:\n";
 	std::cout << boost::num_vertices(*this->graph) << "\n";
@@ -87,10 +103,11 @@ void Graph::print() {
 
 	std::pair<edge_iterator, edge_iterator> ei = boost::edges(*this->graph);
 	for (edge_iterator edge_iter = ei.first; edge_iter != ei.second; ++edge_iter) {
-		const auto & vs = boost::source(*edge_iter, *this->graph);
-		const auto & vt = boost::target(*edge_iter, *this->graph);
-		std::cout << "(" << mDescVertex[vs] << ", " << mDescVertex[vt] << ")\n";
+		vertex_descriptor vs = boost::source(*edge_iter, *this->graph);
+		vertex_descriptor vt = boost::target(*edge_iter, *this->graph);
+		std::cout << "(" << (*this->graph)[vs] << ", " << (*this->graph)[vt] << ")\n";
 	}
+
 	std::cout << "-----------------------------\n";
 }
 
@@ -131,7 +148,8 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def("add_edge", &Graph::add_edge)
 		.def("has_node", &Graph::has_node)
 		.def("has_neighbor", &Graph::has_neighbor)
-		.def("print", &Graph::print)
+		.def("get_neighbors", &Graph::get_neighbors)
+		.def("printGraph", &Graph::printGraph)
 	;
 
 	m.def("is_isomorphic", &is_isomorphic);

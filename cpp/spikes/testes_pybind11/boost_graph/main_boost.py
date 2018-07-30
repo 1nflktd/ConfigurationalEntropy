@@ -134,7 +134,8 @@ def generateSubGraph(G, n, n_closest_neighbors):
 			if not graph.has_node(node):
 				graph.add_node(node)
 
-			for neighbor in G[node]:
+			neighbors = G.get_neighbors(node)
+			for neighbor in neighbors:
 				if neighbor in n_closest_neighbors:
 					graph.add_edge(node, neighbor)
 
