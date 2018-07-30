@@ -13,6 +13,10 @@ namespace py = pybind11;
 /*
 g++ -O3 -Wall -std=c++14 boost_graph.cpp -o boost_graph
 g++ -O3 -Wall -shared -std=c++14 -I../pybind11/include -fPIC `python-config --includes` boost_graph.cpp -o boost_graph.so
+
+python2 main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
+python2 main.py graph_files/fcc.xyz 1.12 0 3 10
+python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
 */
 
 using Edge = std::pair<int, int>;
@@ -27,15 +31,17 @@ using adjacency_iterator = boost::graph_traits<UndirectedGraph>::adjacency_itera
 struct Graph {
 	Graph() : isoLabel(0), graph(std::make_shared<UndirectedGraph>()) {}
 
-	inline void setIsoLabel(int _isoLabel) { isoLabel = _isoLabel; }
-	inline int getIsoLabel() const { return isoLabel; }
+	inline void set_iso_label(int _isoLabel) { isoLabel = _isoLabel; }
+	inline int get_iso_label() const { return isoLabel; }
 	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
 	void add_node(int node);
 	void add_edge(int e1, int e2);
 	bool has_node(int node);
 	py::list get_neighbors(int node);
 	bool has_neighbor(int node, int neighbor);
-	void printGraph();
+	int get_total_nodes();
+	int get_total_edges();
+	void print_graph();
 
 private:
 	int isoLabel;
@@ -44,7 +50,8 @@ private:
 };
 
 void Graph::add_node(int node) {
-	std::cout << "add_node\n" << node << "\n";
+	// std::cout << "add_node\n" << node << "\n";
+
 	vertex_descriptor v = boost::add_vertex(node, *this->graph);
 	mVertexDesc[node] = v;
 }
@@ -54,18 +61,18 @@ void Graph::add_edge(int e1, int e2) {
 	if (mVertexDesc.find(e1) == mVertexDesc.end()) { this->add_node(e1); }
 	if (mVertexDesc.find(e2) == mVertexDesc.end()) { this->add_node(e2); }
 
-	std::cout << "add_edge\n" << e1 << " " << e2 << "\n";
+	// std::cout << "add_edge\n" << e1 << " " << e2 << "\n";
 	boost::add_edge(mVertexDesc[e1], mVertexDesc[e2], *this->graph);
 }
 
 bool Graph::has_node(int node) {
-	std::cout << "has_node\n" << node << "\n";
+	// std::cout << "has_node\n" << node << "\n";
 
 	return mVertexDesc.find(node) != mVertexDesc.end();
 }
 
 bool Graph::has_neighbor(int node, int neighbor) {
-	std::cout << "has_neighbor\n" << node << " " << neighbor << "\n";
+	// std::cout << "has_neighbor\n" << node << " " << neighbor << "\n";
 
 	if (mVertexDesc.find(node) == mVertexDesc.end()) { return false; }
 	if (mVertexDesc.find(neighbor) == mVertexDesc.end()) { return false; }
@@ -76,7 +83,7 @@ bool Graph::has_neighbor(int node, int neighbor) {
 py::list Graph::get_neighbors(int node) {
 	py::list neighbors;
 
-	std::cout << "get_neighbors\n" << node << "\n";
+	// std::cout << "get_neighbors\n" << node << "\n";
 
 	if (mVertexDesc.find(node) == mVertexDesc.end()) { return neighbors; }
 
@@ -88,8 +95,16 @@ py::list Graph::get_neighbors(int node) {
 	return neighbors;
 }
 
-void Graph::printGraph() {
-	std::cout << "print2\n";
+int Graph::get_total_nodes() {
+	return boost::num_vertices(*this->graph);
+}
+
+int Graph::get_total_edges() {
+	return boost::num_edges(*this->graph);
+}
+
+void Graph::print_graph() {
+	// std::cout << "print2\n";
 	std::cout << "-----------------------------\n";
 	std::cout << "vertices:\n";
 	std::cout << boost::num_vertices(*this->graph) << "\n";
@@ -131,7 +146,7 @@ bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
     vf2_callback<UndirectedGraph, UndirectedGraph> callback(*graph1.getGraph(), *graph2.getGraph());
 
 	bool is_iso = vf2_subgraph_iso(*graph1.getGraph(), *graph2.getGraph(), callback);
-	std::cout << "is_iso: " << is_iso << "\n";
+	//std::cout << "is_iso: " << is_iso << "\n";
 
 	return is_iso;
 }
@@ -143,13 +158,16 @@ PYBIND11_MODULE(boost_graph, m) {
 
 	py::class_<Graph, std::shared_ptr<Graph>>(m, "Graph")
 		.def(py::init<>())
-		.def_property("isoLabel", &Graph::getIsoLabel, &Graph::setIsoLabel)
+		.def("get_iso_label", &Graph::get_iso_label)
+		.def("set_iso_label", &Graph::set_iso_label)
 		.def("add_node", &Graph::add_node)
 		.def("add_edge", &Graph::add_edge)
 		.def("has_node", &Graph::has_node)
 		.def("has_neighbor", &Graph::has_neighbor)
 		.def("get_neighbors", &Graph::get_neighbors)
-		.def("printGraph", &Graph::printGraph)
+		.def("get_total_nodes", &Graph::get_total_nodes)
+		.def("get_total_edges", &Graph::get_total_edges)
+		.def("print_graph", &Graph::print_graph)
 	;
 
 	m.def("is_isomorphic", &is_isomorphic);

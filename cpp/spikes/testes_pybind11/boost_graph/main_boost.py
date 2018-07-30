@@ -18,28 +18,28 @@ def run(G, m, n, slab, c):
 	iso_label = 1
 	for i in range(len(graphs)):
 		for j in range(i + 1, len(graphs)):
-			iso_label_i = graphs[i].getIsoLabel()
-			iso_label_j = graphs[j].getIsoLabel()
+			iso_label_i = graphs[i].get_iso_label()
+			iso_label_j = graphs[j].get_iso_label()
 
 			if iso_label_i == 0 or iso_label_j == 0:
 				if bg.is_isomorphic(graphs[i], graphs[j]):
 					if iso_label_i == 0 and iso_label_j == 0:
-						graphs[i].setIsoLabel(iso_label)
-						graphs[j].setIsoLabel(iso_label)
+						graphs[i].set_iso_label(iso_label)
+						graphs[j].set_iso_label(iso_label)
 						label_total[iso_label] = 2
 						iso_label += 1 # label already used
 					elif iso_label_i > 0 and iso_label_j == 0:
-						graphs[j].setIsoLabel(iso_label_i)
+						graphs[j].set_iso_label(iso_label_i)
 						label_total[iso_label_i] += 1
 					elif iso_label_j > 0 and iso_label_i == 0:
-						graphs[i].setIsoLabel(iso_label_j)
+						graphs[i].set_iso_label(iso_label_j)
 						label_total[iso_label_j] += 1
 					elif iso_label_i != iso_label_j:
 						print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
 
 	# get all graphs that are not isomorphic with any other
 	for g in graphs:
-		if g.getIsoLabel() == 0:
+		if g.get_iso_label() == 0:
 			label_total[iso_label] = 1
 			iso_label += 1
 
@@ -186,8 +186,8 @@ def main():
 	print("Slab %s read with success" % filename)
 
 	G = generateGraphFromSlab(slab, covalent_radii_cut_off)
-	total_nodes = len(G)
-	if total_nodes == 0 or G.number_of_edges() == 0:
+	total_nodes = G.get_total_nodes()
+	if total_nodes == 0 or G.get_total_edges() == 0:
 		print("No edges found in graph. Check covalent_radii_cut_off")
 		return
 
