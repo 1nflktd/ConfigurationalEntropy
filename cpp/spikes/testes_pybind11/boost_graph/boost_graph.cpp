@@ -22,7 +22,6 @@ python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz
 using Edge = std::pair<int, int>;
 using Vertex = int;
 using UndirectedGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Vertex, Edge>;
-//Ok, we want to see that all our edges are now contained in the graph
 using edge_iterator = boost::graph_traits<UndirectedGraph>::edge_iterator;
 using vertex_iterator = boost::graph_traits<UndirectedGraph>::vertex_iterator;
 using vertex_descriptor = boost::graph_traits<UndirectedGraph>::vertex_descriptor;
@@ -31,8 +30,6 @@ using adjacency_iterator = boost::graph_traits<UndirectedGraph>::adjacency_itera
 struct Graph {
 	Graph() : isoLabel(0), graph(std::make_shared<UndirectedGraph>()) {}
 
-	inline void set_iso_label(int _isoLabel) { isoLabel = _isoLabel; }
-	inline int get_iso_label() const { return isoLabel; }
 	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
 	void add_node(int node);
 	void add_edge(int e1, int e2);
@@ -43,8 +40,8 @@ struct Graph {
 	int get_total_edges();
 	void print_graph();
 
-private:
 	int isoLabel;
+private:
 	std::shared_ptr<UndirectedGraph> graph;
 	std::map<int, vertex_descriptor> mVertexDesc;
 };
@@ -126,24 +123,21 @@ void Graph::print_graph() {
 	std::cout << "-----------------------------\n";
 }
 
-template <typename Graph1,typename Graph2>
+template <typename Graph1, typename Graph2>
 struct vf2_callback {
 
-	vf2_callback(const Graph1& graph1, const Graph2& graph2) : graph1_(graph1), graph2_(graph2) {}
+	vf2_callback(const Graph1 & graph1, const Graph2 & graph2) {}
+	vf2_callback(Graph1 && graph1, Graph2 && graph2) {}
 
 	template <typename CorrespondenceMap1To2, typename CorrespondenceMap2To1>
 	bool operator()(CorrespondenceMap1To2, CorrespondenceMap2To1) const {
 		// return on the first mapping found
 		return false;
 	}
-
-private:
-	const Graph1& graph1_;
-	const Graph2& graph2_;
 };
 
 bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
-    vf2_callback<UndirectedGraph, UndirectedGraph> callback(*graph1.getGraph(), *graph2.getGraph());
+	vf2_callback<UndirectedGraph, UndirectedGraph> callback(*graph1.getGraph(), *graph2.getGraph());
 
 	bool is_iso = vf2_subgraph_iso(*graph1.getGraph(), *graph2.getGraph(), callback);
 	//std::cout << "is_iso: " << is_iso << "\n";
@@ -158,8 +152,7 @@ PYBIND11_MODULE(boost_graph, m) {
 
 	py::class_<Graph, std::shared_ptr<Graph>>(m, "Graph")
 		.def(py::init<>())
-		.def("get_iso_label", &Graph::get_iso_label)
-		.def("set_iso_label", &Graph::set_iso_label)
+		.def_readwrite("isoLabel", &Graph::isoLabel)
 		.def("add_node", &Graph::add_node)
 		.def("add_edge", &Graph::add_edge)
 		.def("has_node", &Graph::has_node)

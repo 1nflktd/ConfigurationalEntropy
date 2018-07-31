@@ -16,7 +16,7 @@ print g.has_neighbor(2, 3)
 print g.has_neighbor(6, 7)
 print g.has_neighbor(2, 5)
 print g.has_neighbor(4, 4)
-g.printGraph()
+g.print_graph()
 
 """
 g1 = boost_graph.Graph()
