@@ -15,8 +15,9 @@ g++ -O3 -Wall -std=c++14 boost_graph.cpp -o boost_graph
 g++ -O3 -Wall -shared -std=c++14 -I../pybind11/include -fPIC `python-config --includes` boost_graph.cpp -o boost_graph.so
 
 python2 main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
-python2 main.py graph_files/fcc.xyz 1.12 0 3 10
 python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
+python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 10
+python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 15
 */
 
 using Edge = std::pair<int, int>;
@@ -31,6 +32,8 @@ struct Graph {
 	Graph() : isoLabel(0), graph(std::make_shared<UndirectedGraph>()) {}
 
 	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
+	inline int get_iso_label() const { return isoLabel; }
+	inline void set_iso_label(int _isoLabel) { isoLabel = _isoLabel; }
 	void add_node(int node);
 	void add_edge(int e1, int e2);
 	bool has_node(int node);
@@ -145,6 +148,81 @@ bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
 	return is_iso;
 }
 
+double calcShannonEntropy(double Hn, double fi, double m) {
+	double pi = fi / m;
+	Hn -= (pi * log(pi));
+	return Hn;
+}
+
+py::tuple check_isomorfism(py::list & graphs, double n, double m, double c) {
+	std::map<int, int> label_total;
+	int iso_label = 1;
+
+	int size = graphs.size();
+	for (int i = 0; i < size; ++i) {
+		for (int j = i + 1; j < size; ++j) {
+			Graph & graph_i = graphs[i].cast<Graph &>();
+			Graph & graph_j = graphs[j].cast<Graph &>();
+
+			int iso_label_i = graph_i.get_iso_label();
+			int iso_label_j = graph_j.get_iso_label();
+
+			if (iso_label_i == 0 || iso_label_j == 0) {
+				if (is_isomorphic(graph_i, graph_j)) {
+					if (iso_label_i == 0 && iso_label_j == 0) {
+						graph_i.set_iso_label(iso_label);
+						graph_j.set_iso_label(iso_label);
+						label_total[iso_label] = 2;
+						iso_label += 1; // label already used
+					} else if (iso_label_i > 0 && iso_label_j == 0) {
+						graph_j.set_iso_label(iso_label_i);
+						label_total[iso_label_i] += 1;
+					} else if (iso_label_j > 0 && iso_label_i == 0) {
+						graph_i.set_iso_label(iso_label_j);
+						label_total[iso_label_j] += 1;
+					} else if (iso_label_i != iso_label_j) {
+						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
+					}
+				}
+			}
+		}
+	}
+
+	// get all graphs that are not isomorphic with any other
+	for (const auto & g : graphs) {
+		const Graph & g1 = g.cast<const Graph &>();
+		if (g1.get_iso_label() == 0) {
+			label_total[iso_label] = 1;
+			iso_label += 1;
+		}
+	}
+
+	double H_n = 0.0, H1n = 0.0;
+	for (int i = 1; i < iso_label; ++i) {
+		double fi = double(label_total[i]);
+		H_n = calcShannonEntropy(H_n, fi, m);
+		if (fi == 1.0) {
+			H1n = calcShannonEntropy(H1n, fi, m);
+		}
+	}
+
+	double H1nDiv = 0.0;
+	if (H_n > 0) {
+		H1nDiv = (H1n / H_n);
+	}
+
+	double H_n_extrapolated = H_n + (c * H1nDiv);
+	double g_n = 2 * log(n); // (spatial_dimensions - 1)
+	double Hc_n = H_n_extrapolated - g_n;
+
+	bool valid = true;
+	if (H1n > (H_n / 100)) {
+		valid = false;
+	}
+
+	return py::make_tuple(Hc_n, valid);
+}
+
 PYBIND11_MODULE(boost_graph, m) {
 	m.doc() = "pybind11 boost_graph plugin"; // optional module docstring
 
@@ -164,4 +242,5 @@ PYBIND11_MODULE(boost_graph, m) {
 	;
 
 	m.def("is_isomorphic", &is_isomorphic);
+	m.def("check_isomorfism", &check_isomorfism);
 }

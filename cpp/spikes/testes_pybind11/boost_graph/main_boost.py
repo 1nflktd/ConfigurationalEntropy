@@ -13,7 +13,12 @@ from numpy.polynomial.polynomial import polyfit
 
 def run(G, m, n, slab, c):
 	graphs = generateSubgraphs(G, m, n, slab)
+	Hc_n, valid = bg.check_isomorfism(graphs, n, m, c)
 
+	if not valid:
+		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
+
+	"""
 	label_total = {}
 	iso_label = 1
 	for i in range(len(graphs)):
@@ -64,6 +69,7 @@ def run(G, m, n, slab, c):
 		print("n: %d. H1(n) exceeds 1% of H(n). Not a valid measurement." % (n))
 		valid = False
 
+	"""
 	return Hc_n, valid
 
 def calcShannonEntropy(Hn, fi, m):
