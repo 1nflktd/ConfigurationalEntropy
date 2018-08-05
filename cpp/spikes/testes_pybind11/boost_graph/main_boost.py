@@ -12,85 +12,24 @@ from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
 def run(G, m, n, slab, c):
-	graphs = generateSubgraphs(G, m, n, slab)
-	Hc_n, valid = bg.check_isomorfism(graphs, n, m, c)
+	graphs = bg.Graphs(m)
+	generateSubgraphs(G, graphs, m, n, slab)
+	Hc_n, valid = graphs.check_isomorfism(n, m, c)
 
 	if not valid:
 		print("n: %d. H1(n) exceeds 1%% of H(n). Not a valid measurement." % n)
 
-	"""
-	label_total = {}
-	iso_label = 1
-	for i in range(len(graphs)):
-		for j in range(i + 1, len(graphs)):
-			iso_label_i = graphs[i].isoLabel
-			iso_label_j = graphs[j].isoLabel
-
-			if iso_label_i == 0 or iso_label_j == 0:
-				if bg.is_isomorphic(graphs[i], graphs[j]):
-					if iso_label_i == 0 and iso_label_j == 0:
-						graphs[i].isoLabel = iso_label
-						graphs[j].isoLabel = iso_label
-						label_total[iso_label] = 2
-						iso_label += 1 # label already used
-					elif iso_label_i > 0 and iso_label_j == 0:
-						graphs[j].isoLabel = iso_label_i
-						label_total[iso_label_i] += 1
-					elif iso_label_j > 0 and iso_label_i == 0:
-						graphs[i].isoLabel = iso_label_j
-						label_total[iso_label_j] += 1
-					elif iso_label_i != iso_label_j:
-						print("Error while checking isomorphism:\nlabelGi %d : labelGj %d" % (iso_label_i, iso_label_j))
-
-	# get all graphs that are not isomorphic with any other
-	for g in graphs:
-		if g.isoLabel == 0:
-			label_total[iso_label] = 1
-			iso_label += 1
-
-	H_n = 0.0
-	H1n = 0.0
-	for i in range(1, iso_label):
-		fi = float(label_total[i])
-		H_n = calcShannonEntropy(H_n, fi, m)
-		if fi == 1.0:
-			H1n = calcShannonEntropy(H1n, fi, m)
-
-	H1nDiv = 0.0
-	if H_n > 0:
-		H1nDiv = (H1n / H_n)
-
-	H_n_extrapolated = H_n + (c * H1nDiv)
-	g_n = 2 * log(n) # (spatial_dimensions - 1)
-	Hc_n = H_n_extrapolated - g_n
-
-	valid = True
-	if H1n > (H_n / 100):
-		print("n: %d. H1(n) exceeds 1% of H(n). Not a valid measurement." % (n))
-		valid = False
-
-	"""
 	return Hc_n, valid
 
-def calcShannonEntropy(Hn, fi, m):
-	pi = fi / m
-	Hn -= pi * log(pi)
-	return Hn
-
-def generateSubgraphs(G, m, n, slab):
-	graphs = []
-
+def generateSubgraphs(G, graphs, m, n, slab):
 	(dmin, dmax) = getMaxMinSlab(slab)
 
-	i = 0
-	while i < m:
+	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
 		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
 		graph = generateSubGraph(G, n, n_closest_neighbors)
-		graphs.append(graph)
-		i += 1
 
-	return graphs
+		graphs.insert(i, graph)
 
 def getMaxMinSlab(slab):
 	(dmin, dmax) = (

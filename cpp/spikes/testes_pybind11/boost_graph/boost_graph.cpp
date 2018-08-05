@@ -43,8 +43,8 @@ struct Graph {
 	int get_total_edges();
 	void print_graph();
 
-	int isoLabel;
 private:
+	int isoLabel;
 	std::shared_ptr<UndirectedGraph> graph;
 	std::map<int, vertex_descriptor> mVertexDesc;
 };
@@ -148,37 +148,50 @@ bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
 	return is_iso;
 }
 
-double calcShannonEntropy(double Hn, double fi, double m) {
+bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2) {
+	vf2_callback<UndirectedGraph, UndirectedGraph> callback(uGraph1, uGraph2);
+
+	return vf2_subgraph_iso(uGraph1, uGraph2, callback);
+}
+
+double calc_shannon_entropy(double Hn, double fi, double m) {
 	double pi = fi / m;
 	Hn -= (pi * log(pi));
 	return Hn;
 }
 
-py::tuple check_isomorfism(py::list & graphs, double n, double m, double c) {
+struct Graphs {
+	Graphs() {}
+	Graphs(int qty) : graphs(std::vector<Graph>(qty)) {}
+
+	inline void insert(int pos, const Graph & _graph) { /*graphs.push_back(_graph);*/ graphs[pos] = _graph; }
+	py::tuple check_isomorfism(double n, double m, double c);
+private:
+	std::vector<Graph> graphs;
+};
+
+py::tuple Graphs::check_isomorfism(double n, double m, double c) {
 	std::map<int, int> label_total;
 	int iso_label = 1;
 
 	int size = graphs.size();
 	for (int i = 0; i < size; ++i) {
 		for (int j = i + 1; j < size; ++j) {
-			Graph & graph_i = graphs[i].cast<Graph &>();
-			Graph & graph_j = graphs[j].cast<Graph &>();
-
-			int iso_label_i = graph_i.get_iso_label();
-			int iso_label_j = graph_j.get_iso_label();
+			int iso_label_i = graphs[i].get_iso_label();
+			int iso_label_j = graphs[j].get_iso_label();
 
 			if (iso_label_i == 0 || iso_label_j == 0) {
-				if (is_isomorphic(graph_i, graph_j)) {
+				if (is_isomorphic(*graphs[i].getGraph(), *graphs[j].getGraph())) {
 					if (iso_label_i == 0 && iso_label_j == 0) {
-						graph_i.set_iso_label(iso_label);
-						graph_j.set_iso_label(iso_label);
+						graphs[i].set_iso_label(iso_label);
+						graphs[j].set_iso_label(iso_label);
 						label_total[iso_label] = 2;
 						iso_label += 1; // label already used
 					} else if (iso_label_i > 0 && iso_label_j == 0) {
-						graph_j.set_iso_label(iso_label_i);
+						graphs[j].set_iso_label(iso_label_i);
 						label_total[iso_label_i] += 1;
 					} else if (iso_label_j > 0 && iso_label_i == 0) {
-						graph_i.set_iso_label(iso_label_j);
+						graphs[i].set_iso_label(iso_label_j);
 						label_total[iso_label_j] += 1;
 					} else if (iso_label_i != iso_label_j) {
 						std::cout << "Error while checking isomorphism:\nlabelGi " << iso_label_i << " : labelGj " << iso_label_j << "\n";
@@ -190,8 +203,7 @@ py::tuple check_isomorfism(py::list & graphs, double n, double m, double c) {
 
 	// get all graphs that are not isomorphic with any other
 	for (const auto & g : graphs) {
-		const Graph & g1 = g.cast<const Graph &>();
-		if (g1.get_iso_label() == 0) {
+		if (g.get_iso_label() == 0) {
 			label_total[iso_label] = 1;
 			iso_label += 1;
 		}
@@ -200,9 +212,9 @@ py::tuple check_isomorfism(py::list & graphs, double n, double m, double c) {
 	double H_n = 0.0, H1n = 0.0;
 	for (int i = 1; i < iso_label; ++i) {
 		double fi = double(label_total[i]);
-		H_n = calcShannonEntropy(H_n, fi, m);
+		H_n = calc_shannon_entropy(H_n, fi, m);
 		if (fi == 1.0) {
-			H1n = calcShannonEntropy(H1n, fi, m);
+			H1n = calc_shannon_entropy(H1n, fi, m);
 		}
 	}
 
@@ -230,7 +242,6 @@ PYBIND11_MODULE(boost_graph, m) {
 
 	py::class_<Graph, std::shared_ptr<Graph>>(m, "Graph")
 		.def(py::init<>())
-		.def_readwrite("isoLabel", &Graph::isoLabel)
 		.def("add_node", &Graph::add_node)
 		.def("add_edge", &Graph::add_edge)
 		.def("has_node", &Graph::has_node)
@@ -241,6 +252,10 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def("print_graph", &Graph::print_graph)
 	;
 
-	m.def("is_isomorphic", &is_isomorphic);
-	m.def("check_isomorfism", &check_isomorfism);
+	py::class_<Graphs>(m, "Graphs")
+		.def(py::init<>())
+		.def(py::init<int>())
+		.def("insert", &Graphs::insert)
+		.def("check_isomorfism", &Graphs::check_isomorfism)
+	;
 }
