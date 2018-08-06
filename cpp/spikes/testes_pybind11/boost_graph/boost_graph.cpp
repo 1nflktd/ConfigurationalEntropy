@@ -6,6 +6,7 @@
 
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/isomorphism.hpp"
 #include "boost/graph/vf2_sub_graph_iso.hpp"
 
 namespace py = pybind11;
@@ -151,7 +152,7 @@ bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
 bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2) {
 	vf2_callback<UndirectedGraph, UndirectedGraph> callback(uGraph1, uGraph2);
 
-	return vf2_subgraph_iso(uGraph1, uGraph2, callback);
+	return vf2_graph_iso(uGraph1, uGraph2, callback);
 }
 
 double calc_shannon_entropy(double Hn, double fi, double m) {
