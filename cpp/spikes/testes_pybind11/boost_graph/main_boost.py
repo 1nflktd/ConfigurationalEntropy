@@ -1,7 +1,9 @@
 import sys
 import boost_graph as bg
 import matplotlib.pyplot as plt
+import os
 
+from datetime import datetime
 from ase import Atom
 from ase.io import read
 from ase.data import covalent_radii
@@ -110,7 +112,7 @@ def printGraph(graph):
 	plt.show()
 
 def main():
-	if len(sys.argv) < 6:
+	if len(sys.argv) < 7:
 		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n")
 		return
 
@@ -119,6 +121,7 @@ def main():
 	c = float(sys.argv[3])
 	n1 = int(sys.argv[4])
 	n2 = int(sys.argv[5])
+	calculate = sys.argv[6] # Y or N
 
 	if n1 > n2:
 		print("Final m cannot be smaller than initial m")
@@ -138,30 +141,47 @@ def main():
 
 	print("Graph created with success. Nodes found: %d" % total_nodes)
 
+	date_now = datetime.now()
+	ce_file = "generated_files/gen_" + str(date_now.day) + "_" + str(date_now.month) + "_" + str(date_now.year) + "_" + str(date_now.hour) + "_" + str(date_now.minute) + "_" + str(date_now.second) + ".ce"
+	dirname = os.path.dirname(ce_file)
+	if not os.path.exists(dirname):
+		os.makedirs(dirname)
+
+	f = open(ce_file, "w+")
+	f.write("filename: " + filename + "; covalent: " + str(covalent_radii_cut_off) + "; c: " + str(c) + "; n1: " + str(n1) + "; n2: " + str(n2) + "\r\n")
+
 	hcn_values = []
 	xy_polyfit = []
 	for n in range(n1, n2):
 		m = n * n * total_nodes
 		(hcn, valid) = run(G, m, n, slab, c)
+
+		f.write("n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n")
+
 		hcn_values.append((n, hcn))
 		if valid:
 			xy_polyfit.append((n, hcn))
 
-	(x_p, y_p) = zip(*xy_polyfit)
-	x_p = asarray(x_p)
-	y_p = asarray(y_p)
+	f.close()
 
-	# straight line fit
-	b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
-	plt.plot(x_p, b + m * x_p, '-')
+	if calculate == "Y":
+		(x_p, y_p) = zip(*xy_polyfit)
+		x_p = asarray(x_p)
+		y_p = asarray(y_p)
 
-	x, y = zip(*hcn_values)
-	plt.scatter(x, y)
+		# straight line fit
+		b, m = polyfit(x_p, y_p, 1) # m equals the slope of the line
+		plt.plot(x_p, b + m * x_p, '-')
 
-	plt.axis([n1, n2, -5, 10])
-	plt.show()
+		x, y = zip(*hcn_values)
+		plt.scatter(x, y)
 
-	print("Estimated configurational entropy = %f" % (m))
+		plt.axis([n1, n2, -5, 10])
+		plt.show()
+
+		print("Estimated configurational entropy = %f" % (m))
+
+	print("Program ended correctly")
 
 if __name__ == "__main__":
 	main()

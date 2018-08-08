@@ -16,7 +16,7 @@ g++ -O3 -Wall -std=c++14 boost_graph.cpp -o boost_graph
 g++ -O3 -Wall -shared -std=c++14 -I../pybind11/include -fPIC `python-config --includes` boost_graph.cpp -o boost_graph.so
 
 python2 main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
-python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
+python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 15
 python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 10
 python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 15
 */
@@ -131,7 +131,6 @@ template <typename Graph1, typename Graph2>
 struct vf2_callback {
 
 	vf2_callback(const Graph1 & graph1, const Graph2 & graph2) {}
-	vf2_callback(Graph1 && graph1, Graph2 && graph2) {}
 
 	template <typename CorrespondenceMap1To2, typename CorrespondenceMap2To1>
 	bool operator()(CorrespondenceMap1To2, CorrespondenceMap2To1) const {
@@ -139,15 +138,6 @@ struct vf2_callback {
 		return false;
 	}
 };
-
-bool is_isomorphic(const Graph & graph1, const Graph & graph2) {
-	vf2_callback<UndirectedGraph, UndirectedGraph> callback(*graph1.getGraph(), *graph2.getGraph());
-
-	bool is_iso = vf2_subgraph_iso(*graph1.getGraph(), *graph2.getGraph(), callback);
-	//std::cout << "is_iso: " << is_iso << "\n";
-
-	return is_iso;
-}
 
 bool is_isomorphic(const UndirectedGraph & uGraph1, const UndirectedGraph & uGraph2) {
 	vf2_callback<UndirectedGraph, UndirectedGraph> callback(uGraph1, uGraph2);

@@ -1,6 +1,5 @@
 import boost_graph as bg
 
-"""
 g = bg.Graph()
 g.add_node(2)
 g.add_node(3)
@@ -18,10 +17,6 @@ print g.has_neighbor(6, 7)
 print g.has_neighbor(2, 5)
 print g.has_neighbor(4, 4)
 g.print_graph()
-"""
-
-graphs = bg.new_graphs()
-graphs.insert(bg.Graph())
 
 """
 g1 = bg.Graph()
