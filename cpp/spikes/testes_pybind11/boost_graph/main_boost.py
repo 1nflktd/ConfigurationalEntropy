@@ -13,9 +13,10 @@ from random import uniform
 from numpy import asarray
 from numpy.polynomial.polynomial import polyfit
 
-def run(G, m, n, slab, c):
+def run(G, m, n, slab, c, atomic_number):
 	graphs = bg.Graphs(m)
-	generateSubgraphs(G, graphs, m, n, slab)
+
+	generateSubgraphs(G, graphs, m, n, slab, atomic_number)
 	Hc_n, valid = graphs.check_isomorfism(n, m, c)
 
 	if not valid:
@@ -23,12 +24,12 @@ def run(G, m, n, slab, c):
 
 	return Hc_n, valid
 
-def generateSubgraphs(G, graphs, m, n, slab):
+def generateSubgraphs(G, graphs, m, n, slab, atomic_number):
 	(dmin, dmax) = getMaxMinSlab(slab)
 
 	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
-		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z)
+		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
 		graph = generateSubGraph(G, n, n_closest_neighbors)
 
 		graphs.insert(i, graph)
@@ -56,18 +57,19 @@ def generateRandomPoint(dmin, dmax):
 
 	return (x, y, z)
 
-def getNClosestNeighborsFromPoint(slab, n, x, y, z):
-	atomic_numbers = slab.get_atomic_numbers()
-
-	slab.append(Atom(atomic_numbers[0], (x, y, z))) # get the first atom
+def getAllDistancesFromPoint(slab, atomic_number, x, y, z):
+	slab.append(Atom(atomic_number, (x, y, z))) # get the first atom
 	idxAtom = len(slab) - 1
-	all_distances = slab.get_all_distances(mic=True)[idxAtom]
+	indices = range(0, idxAtom)
+	all_distances = slab.get_distances(idxAtom, indices, mic=True)
 	slab.pop()
 
+	return all_distances, idxAtom
+
+def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
+	all_distances = getAllDistancesFromPoint(slab, atomic_number, x, y, z)
 	distances = {}
 	for idx, distance in enumerate(all_distances):
-		if idx == idxAtom:
-			break
 		distances[idx] = distance
 
 	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
@@ -152,9 +154,10 @@ def main():
 
 	hcn_values = []
 	xy_polyfit = []
+	atomic_number = slab.get_atomic_numbers()[0]
 	for n in range(n1, n2):
 		m = n * n * total_nodes
-		(hcn, valid) = run(G, m, n, slab, c)
+		(hcn, valid) = run(G, m, n, slab, c, atomic_number)
 
 		f.write("n: " + str(n) + "; m: " + str(m) + "; hcn: " + str(hcn) + "; valid: " + str(valid) + "\r\n")
 
