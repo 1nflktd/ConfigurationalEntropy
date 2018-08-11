@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <iostream>
 #include <memory>
@@ -17,6 +18,7 @@ g++ -O3 -Wall -shared -std=c++14 -I../pybind11/include -fPIC `python-config --in
 
 python2 main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 10
 python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc.xyz 1.12 0 3 15
+python2 -m cProfile -s time main_boost.py ../../../../python/graph_files/fcc162.xyz 1.12 0 3 10
 python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 10
 python2 -m cProfile -s time main.py graph_files/fcc.xyz 1.12 0 3 15
 */
@@ -35,14 +37,15 @@ struct Graph {
 	inline std::shared_ptr<UndirectedGraph> getGraph() const { return graph; }
 	inline int get_iso_label() const { return isoLabel; }
 	inline void set_iso_label(int _isoLabel) { isoLabel = _isoLabel; }
-	void add_node(int node);
+	vertex_descriptor add_node(int node);
 	void add_edge(int e1, int e2);
-	bool has_node(int node);
-	py::list get_neighbors(int node);
+	bool has_node(int node) const;
+	//py::list get_neighbors(int node);
+	std::vector<int> get_neighbors(int node) const;
 	bool has_neighbor(int node, int neighbor);
-	int get_total_nodes();
-	int get_total_edges();
-	void print_graph();
+	int get_total_nodes() const;
+	int get_total_edges() const;
+	void print_graph() const;
 
 private:
 	int isoLabel;
@@ -50,23 +53,38 @@ private:
 	std::map<int, vertex_descriptor> mVertexDesc;
 };
 
-void Graph::add_node(int node) {
+vertex_descriptor Graph::add_node(int node) {
 	// std::cout << "add_node\n" << node << "\n";
 
 	vertex_descriptor v = boost::add_vertex(node, *this->graph);
 	mVertexDesc[node] = v;
+
+	return v;
 }
 
 void Graph::add_edge(int e1, int e2) {
 	// if vertices not present, add
-	if (mVertexDesc.find(e1) == mVertexDesc.end()) { this->add_node(e1); }
-	if (mVertexDesc.find(e2) == mVertexDesc.end()) { this->add_node(e2); }
+	auto itE1 = mVertexDesc.find(e1);
+	vertex_descriptor ve1;
+	if (itE1 == mVertexDesc.end()) {
+		ve1 = this->add_node(e1);
+	} else {
+		ve1 = itE1->second;
+	}
+
+	auto itE2 = mVertexDesc.find(e2);
+	vertex_descriptor ve2;
+	if (itE2 == mVertexDesc.end()) {
+		ve2 = this->add_node(e2);
+	} else {
+		ve2 = itE2->second;
+	}
 
 	// std::cout << "add_edge\n" << e1 << " " << e2 << "\n";
-	boost::add_edge(mVertexDesc[e1], mVertexDesc[e2], *this->graph);
+	boost::add_edge(ve1, ve2, *this->graph);
 }
 
-bool Graph::has_node(int node) {
+bool Graph::has_node(int node) const {
 	// std::cout << "has_node\n" << node << "\n";
 
 	return mVertexDesc.find(node) != mVertexDesc.end();
@@ -81,30 +99,31 @@ bool Graph::has_neighbor(int node, int neighbor) {
 	return boost::edge(mVertexDesc[node], mVertexDesc[neighbor], *this->graph).second;
 }
 
-py::list Graph::get_neighbors(int node) {
-	py::list neighbors;
+std::vector<int> Graph::get_neighbors(int node) const {
+	std::vector<int> neighbors;
 
 	// std::cout << "get_neighbors\n" << node << "\n";
 
-	if (mVertexDesc.find(node) == mVertexDesc.end()) { return neighbors; }
+	auto it = mVertexDesc.find(node); // int, vertex_descriptor
+	if (it == mVertexDesc.end()) { return neighbors; }
 
 	adjacency_iterator neighbor, neighbor_end;
-	for (tie(neighbor, neighbor_end) = boost::adjacent_vertices(mVertexDesc[node], *this->graph); neighbor != neighbor_end; ++neighbor) {
-		neighbors.append((*this->graph)[*neighbor]);
+	for (tie(neighbor, neighbor_end) = boost::adjacent_vertices(it->second, *this->graph); neighbor != neighbor_end; ++neighbor) {
+		neighbors.push_back((*this->graph)[*neighbor]);
 	}
 
 	return neighbors;
 }
 
-int Graph::get_total_nodes() {
+int Graph::get_total_nodes() const {
 	return boost::num_vertices(*this->graph);
 }
 
-int Graph::get_total_edges() {
+int Graph::get_total_edges() const {
 	return boost::num_edges(*this->graph);
 }
 
-void Graph::print_graph() {
+void Graph::print_graph() const {
 	// std::cout << "print2\n";
 	std::cout << "-----------------------------\n";
 	std::cout << "vertices:\n";
@@ -157,9 +176,33 @@ struct Graphs {
 
 	inline void insert(int pos, const Graph & _graph) { /*graphs.push_back(_graph);*/ graphs[pos] = _graph; }
 	py::tuple check_isomorfism(double n, double m, double c);
+	void generate_subgraph(int pos, const Graph & G, int n, const py::list & nClosestNeighbors);
 private:
 	std::vector<Graph> graphs;
 };
+
+void Graphs::generate_subgraph(int pos, const Graph & G, int n, const py::list & nClosestNeighbors) {
+	Graph graph = Graph();
+
+	std::vector<int> vecNClosestNeighbors = nClosestNeighbors.cast<std::vector<int>>();
+	for (const auto & pynode : nClosestNeighbors) {
+		int node = pynode.cast<int>();
+		if (G.has_node(node)) {
+			if (!graph.has_node(node)) {
+				graph.add_node(node);
+			}
+
+			std::vector<int> neighbors = G.get_neighbors(node);
+			for (const auto & neighbor : neighbors) {
+				if (std::find(vecNClosestNeighbors.begin(), vecNClosestNeighbors.end(), neighbor) != vecNClosestNeighbors.end()) {
+					graph.add_edge(node, neighbor);
+				}
+			}
+		}
+	}
+
+	this->insert(pos, graph);
+}
 
 py::tuple Graphs::check_isomorfism(double n, double m, double c) {
 	std::map<int, int> label_total;
@@ -247,6 +290,7 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def(py::init<>())
 		.def(py::init<int>())
 		.def("insert", &Graphs::insert)
+		.def("generate_subgraph", &Graphs::generate_subgraph)
 		.def("check_isomorfism", &Graphs::check_isomorfism)
 	;
 }

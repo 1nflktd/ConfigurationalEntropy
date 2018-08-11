@@ -30,9 +30,9 @@ def generateSubgraphs(G, graphs, m, n, slab, atomic_number):
 	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
 		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
-		graph = generateSubGraph(G, n, n_closest_neighbors)
-
-		graphs.insert(i, graph)
+		#graph = generateSubGraph(G, n, n_closest_neighbors)
+		#graphs.insert(i, graph)
+		graphs.generate_subgraph(i, G, n, n_closest_neighbors)
 
 def getMaxMinSlab(slab):
 	(dmin, dmax) = (
@@ -64,7 +64,7 @@ def getAllDistancesFromPoint(slab, atomic_number, x, y, z):
 	all_distances = slab.get_distances(idxAtom, indices, mic=True)
 	slab.pop()
 
-	return all_distances, idxAtom
+	return all_distances
 
 def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
 	all_distances = getAllDistancesFromPoint(slab, atomic_number, x, y, z)
@@ -115,7 +115,7 @@ def printGraph(graph):
 
 def main():
 	if len(sys.argv) < 7:
-		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n")
+		print("1 parameter: xyz filename\n2 parameter: covalent_radii_cut_off\n3 parameter: c\n4 parameter: initial n\n5 parameter: final n\n6 parameter: calculate (Y or N)")
 		return
 
 	filename = sys.argv[1]
