@@ -63,7 +63,7 @@ vertex_descriptor Graph::add_node(int node) {
 }
 
 void Graph::add_edge(int e1, int e2) {
-	// if vertices not present, add
+	// if vertices are not present, add them
 	auto itE1 = mVertexDesc.find(e1);
 	vertex_descriptor ve1;
 	if (itE1 == mVertexDesc.end()) {
@@ -176,32 +176,35 @@ struct Graphs {
 
 	inline void insert(int pos, const Graph & _graph) { /*graphs.push_back(_graph);*/ graphs[pos] = _graph; }
 	py::tuple check_isomorfism(double n, double m, double c);
-	void generate_subgraph(int pos, const Graph & G, int n, const py::list & nClosestNeighbors);
+	void generate_subgraphs(const Graph & G, int n, const py::list & closestNeighbors);
 private:
 	std::vector<Graph> graphs;
 };
 
-void Graphs::generate_subgraph(int pos, const Graph & G, int n, const py::list & nClosestNeighbors) {
-	Graph graph = Graph();
+void Graphs::generate_subgraphs(const Graph & G, int n, const py::list & closestNeighbors) {
+	std::vector<std::vector<int>> vecClosestNeighbors = closestNeighbors.cast<std::vector<std::vector<int>>>();
 
-	std::vector<int> vecNClosestNeighbors = nClosestNeighbors.cast<std::vector<int>>();
-	for (const auto & pynode : nClosestNeighbors) {
-		int node = pynode.cast<int>();
-		if (G.has_node(node)) {
-			if (!graph.has_node(node)) {
-				graph.add_node(node);
-			}
+	int pos = 0;
+	for (const auto & nClosestNeighbors : vecClosestNeighbors) {
+		Graph graph = Graph();
+		for (const auto & node : nClosestNeighbors) {
+			//int node = pynode.cast<int>();
+			if (G.has_node(node)) {
+				if (!graph.has_node(node)) {
+					graph.add_node(node);
+				}
 
-			std::vector<int> neighbors = G.get_neighbors(node);
-			for (const auto & neighbor : neighbors) {
-				if (std::find(vecNClosestNeighbors.begin(), vecNClosestNeighbors.end(), neighbor) != vecNClosestNeighbors.end()) {
-					graph.add_edge(node, neighbor);
+				const std::vector<int> & neighbors = G.get_neighbors(node);
+				for (const auto & neighbor : neighbors) {
+					if (std::find(nClosestNeighbors.begin(), nClosestNeighbors.end(), neighbor) != nClosestNeighbors.end()) {
+						graph.add_edge(node, neighbor);
+					}
 				}
 			}
 		}
-	}
 
-	this->insert(pos, graph);
+		this->insert(pos++, graph);
+	}
 }
 
 py::tuple Graphs::check_isomorfism(double n, double m, double c) {
@@ -291,6 +294,7 @@ PYBIND11_MODULE(boost_graph, m) {
 		.def(py::init<int>())
 		.def("insert", &Graphs::insert)
 		.def("generate_subgraph", &Graphs::generate_subgraph)
+		.def("generate_subgraphs", &Graphs::generate_subgraphs)
 		.def("check_isomorfism", &Graphs::check_isomorfism)
 	;
 }

@@ -27,12 +27,13 @@ def run(G, m, n, slab, c, atomic_number):
 def generateSubgraphs(G, graphs, m, n, slab, atomic_number):
 	(dmin, dmax) = getMaxMinSlab(slab)
 
+	closest_neighbors = []
 	for i in range(m):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
 		n_closest_neighbors = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
-		#graph = generateSubGraph(G, n, n_closest_neighbors)
-		#graphs.insert(i, graph)
-		graphs.generate_subgraph(i, G, n, n_closest_neighbors)
+		closest_neighbors.append(n_closest_neighbors)
+
+	graphs.generate_subgraphs(G, n, closest_neighbors)
 
 def getMaxMinSlab(slab):
 	(dmin, dmax) = (
@@ -74,21 +75,6 @@ def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
 
 	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
 	return [i[0] for i in n_first] # return only the first element in list
-
-def generateSubGraph(G, n, n_closest_neighbors):
-	graph = bg.Graph()
-
-	for node in n_closest_neighbors:
-		if G.has_node(node):
-			if not graph.has_node(node):
-				graph.add_node(node)
-
-			neighbors = G.get_neighbors(node)
-			for neighbor in neighbors:
-				if neighbor in n_closest_neighbors:
-					graph.add_edge(node, neighbor)
-
-	return graph
 
 def generateGraphFromSlab(slab, covalent_radii_cut_off):
 	graph = bg.Graph()
