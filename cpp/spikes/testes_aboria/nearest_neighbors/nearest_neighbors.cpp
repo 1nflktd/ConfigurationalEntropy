@@ -2,10 +2,20 @@
 
 #include <vector>
 #include <iostream>
+#include <cmath>
+#include <set>
 
 using namespace Aboria;
 
 // g++ -Wall -O3 -std=c++14 -I../Aboria/src -I../Aboria/third-party nearest_neighbors.cpp -o nearest_neighbors
+
+double calculateEuclideanDistance(vdouble3 rp, vdouble3 p1) {
+	return std::sqrt(
+		std::pow(rp[0] - p1[0], 2) +
+		std::pow(rp[1] - p1[1], 2) +
+		std::pow(rp[2] - p1[2], 2)
+	);
+}
 
 int main() {
 
@@ -63,7 +73,7 @@ int main() {
 	//ABORIA_VARIABLE(neighbours_count, int, "number of neighbours")
 
 	//typedef Particles<std::tuple<neighbours_count>> particle_t;
-	typedef Particles<std::tuple<>, 3, std::vector, CellListOrdered> particle_t;
+	typedef Particles<std::tuple<>, 3, std::vector, Kdtree> particle_t;
 	typedef particle_t::position position;
 
 	const size_t N = points.size();
@@ -72,18 +82,46 @@ int main() {
 		get<position>(particles)[i] = vdouble3(points[i][0], points[i][1], points[i][2]);
 	}
 
-	vdouble3 min = vdouble3(0, 0, 0);
-	vdouble3 max = vdouble3(3.83, 8.11, 10.43);
+	vdouble3 min = vdouble3(0.0, 0.0, 0.0);
+	//vdouble3 max = vdouble3(3.92, 8.20, 10.52);
+	vdouble3 max = vdouble3(5.105310960166873, 8.842657971447274, 12.505406830647296);
 	//vbool3 periodic = vbool3::Constant(true);
+
 	vbool3 periodic = vbool3(true, true, false);
+	//vbool3 periodic = vbool3(true, true, true);
+
 	particles.init_neighbour_search(min, max, periodic);
 
-	double radius = 3;
+	//vdouble3 rp = vdouble3(0.893079307334, 3.57366629713, 10.2738712726);
+	vdouble3 rp = vdouble3(2.893079307334, 1.57366629713, 6.2738712726);
+
+/*
+0.893079307334 3.57366629713 10.2738712726
+nnPy
+[25, 26, 27, 29, 31, 32, 35, 37, 39, 45]
+nnAboria
+[25, 26, 27, 29, 32, 33, 35, 37, 39, 45]
+*/
+	using Pair = std::pair<double, int>;
+
+	std::set<Pair> meuSet;
+	double radius = 4;
 	int count = 0;
-	for (auto i = euclidean_search(particles.get_query(), vdouble3::Constant(0), radius); i != false; ++i) {
+	for (auto i = euclidean_search(particles.get_query(), rp, radius); i != false; ++i) {
 		count++;
 
+		meuSet.emplace(Pair{(i.dx()).norm(), get<id>(*i)});
+
 		std::cout << "Found a particle with dx = " << i.dx() << " and id = " << get<id>(*i) << "\n";
+		//std::cout << (rp - get<position>(*i)).norm() << "\n";
+		//std::cout << (rp - i.dx()).norm() << "\n";
+		//std::cout << (i.dx()).norm() << "\n";
+		//std::cout << "Distance = " << rp - i.dx() << "\n";
+		//std::cout << "Euclidean Distance = " << calculateEuclideanDistance(rp, i.dx()) << "\n";
+	}
+
+	for (const auto & p : meuSet) {
+		std::cout << p.second << "\t" << p.first << "\n";
 	}
 
 	std::cout << "There are " << count << " particles.\n";
