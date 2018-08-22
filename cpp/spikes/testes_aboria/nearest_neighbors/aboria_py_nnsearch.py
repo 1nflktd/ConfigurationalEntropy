@@ -1,6 +1,8 @@
 import sys
 import os
 import aboria_nnsearch as aboria
+import ase.geometry
+import ase.visualize
 
 from ase import Atom
 from ase.io import read
@@ -24,14 +26,6 @@ def getMaxMinSlab(slab):
 			if (d < dmin[idx]):
 				dmin[idx] = d
 
-	dmin[0] -= 0.1
-	dmin[1] -= 0.1
-	dmin[2] -= 0.1
-
-	dmax[0] += 0.1
-	dmax[1] += 0.1
-	dmax[2] += 0.1
-
 	return (dmin, dmax)
 
 def getAllDistancesFromPoint(slab, atomic_number, x, y, z):
@@ -51,8 +45,10 @@ def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
 
 	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
 
+	"""
 	for i, d in n_first:
 		print i, "\t", d
+	"""
 
 	return [i[0] for i in n_first] # return only the first element in list
 
@@ -77,11 +73,12 @@ def main():
 	atomic_number = slab.get_atomic_numbers()[0]
 
 	n = 20
-	"""
 	(pbcX, pbcY, pbcZ) = slab.get_pbc()
 	aboriaSearchTree = aboria.SearchTree(3, len(slab), pbcX, pbcY, pbcZ)
 	aboriaSearchTree.add_positions(slab.get_positions(wrap=True))
-	aboriaSearchTree.init_search(dmin[0], dmax[0], dmin[1], dmax[1], dmin[2], dmax[2])
+
+	cell = slab.get_cell()
+	aboriaSearchTree.init_search(0, cell[0][0], 0, cell[1][1], 0, cell[2][2])
 
 	iguais, diferentes = 0, 0
 
@@ -90,23 +87,24 @@ def main():
 		nnPy = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
 		nnAboria = aboriaSearchTree.search_nearest_neighbors(x, y, z, n)
 
-		if (sorted(nnPy) == nnAboria):
+		if (nnPy == nnAboria):
 			iguais += 1
 		else:
 			diferentes += 1
 			print x, y, z
 			print "nnPy"
-			print sorted(nnPy)
+			#print sorted(nnPy)
+			print nnPy
 			print "nnAboria"
 			print nnAboria
 			print ""
 
 	print "iguais %d, diferentes %d" % (iguais, diferentes)
-	"""
 
-	#(x, y, z) = (0.893079307334, 3.57366629713, 10.2738712726)
+	"""
 	(x, y, z) = (2.893079307334, 1.57366629713, 6.2738712726)
 	nnPy = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
+	"""
 
 if __name__ == "__main__":
 	main()

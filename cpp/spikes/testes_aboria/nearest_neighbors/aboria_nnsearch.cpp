@@ -62,26 +62,38 @@ void SearchTree::init_search(double xMin, double xMax, double yMin, double yMax,
 }
 
 py::list SearchTree::search_nearest_neighbors(double x, double y, double z, int n) {
-	std::set<int> setNeighbors;
 	int count = 0;
-	double radius = 0.1;
+	double radius = 3;
+
+	using Pair = std::pair<double, int>;
+	std::set<Pair> setNeighbors;
+	int biggerThreshold = n * 3;
 
 	do {
 		for (auto i = Aboria::euclidean_search(_particles.get_query(), Aboria::vdouble3(x, y, z), radius); i != false; ++i) {
-			auto retInsertion = setNeighbors.emplace(Aboria::get<Aboria::id>(*i));
+			auto retInsertion = setNeighbors.emplace(Pair{(i.dx()).norm(), Aboria::get<Aboria::id>(*i)});
 			if (retInsertion.second) {
-				if (++count >= n) {
+				count++; // incrementa, mas nao para
+				if (count >= biggerThreshold) {
 					break;
 				}
 			}
 		}
 
-		radius += 0.05;
-	} while (count < n && radius <= 5);
+		radius += 1;
+	} while (count < biggerThreshold && radius <= 5);
 
 	py::list neighbors;
-	for (const auto & n : setNeighbors) {
-		neighbors.append(n);
+	std::vector<int> alreadyReturned;
+	int i = 0;
+	for (const auto & neighbor : setNeighbors) {
+		if (std::find(alreadyReturned.begin(), alreadyReturned.end(), neighbor.second) == alreadyReturned.end()) {
+			neighbors.append(neighbor.second);
+			alreadyReturned.push_back(neighbor.second);
+			if (++i >= n) {
+				break;
+			}
+		}
 	}
 
 	return neighbors;
