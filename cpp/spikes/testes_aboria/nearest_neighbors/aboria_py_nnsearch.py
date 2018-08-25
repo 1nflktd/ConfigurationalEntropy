@@ -9,8 +9,9 @@ from ase.io import read
 from operator import itemgetter
 from random import uniform
 
-# python2 aboria_py_nnsearch.py ../../../../python/graph_files/fcc.xyz
+# python2 aboria_py_nnsearch.py ../../../../python/graph_files/fcc162.xyz
 # python2 aboria_py_nnsearch.py ../../../../python/graph_files/fcc_sempbc.xyz
+# python2 -m cProfile -s time aboria_py_nnsearch.py ../../../../python/graph_files/fcc162.xyz
 
 def getMaxMinSlab(slab):
 	(dmin, dmax) = (
@@ -44,12 +45,6 @@ def getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number):
 		distances[idx] = distance
 
 	n_first = sorted(distances.items(), key=itemgetter(1))[:n] # return list of tuples
-
-	"""
-	for i, d in n_first:
-		print i, "\t", d
-	"""
-
 	return [i[0] for i in n_first] # return only the first element in list
 
 def generateRandomPoint(dmin, dmax):
@@ -82,7 +77,7 @@ def main():
 
 	iguais, diferentes = 0, 0
 
-	for i in range(1, 501):
+	for i in range(1, 1000001):
 		(x, y, z) = generateRandomPoint(dmin, dmax)
 		nnPy = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
 		nnAboria = aboriaSearchTree.search_nearest_neighbors(x, y, z, n)
@@ -100,11 +95,6 @@ def main():
 			print ""
 
 	print "iguais %d, diferentes %d" % (iguais, diferentes)
-
-	"""
-	(x, y, z) = (2.893079307334, 1.57366629713, 6.2738712726)
-	nnPy = getNClosestNeighborsFromPoint(slab, n, x, y, z, atomic_number)
-	"""
 
 if __name__ == "__main__":
 	main()
